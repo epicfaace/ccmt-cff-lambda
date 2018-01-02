@@ -8,7 +8,7 @@ def make_response_success(body):
     return {
         "statusCode": 200,
         "headers": {
-            "my_header": "my_value"
+            'Access-Control-Allow-Origin': '*'
         },
         "body": json_util.dumps(body),
         "isBase64Encoded": False
@@ -29,24 +29,25 @@ def get_responses_for_form(formId):
     #asd
     pass
 def parseQuery(qs):
-    if (not "action" in qs):
-        return {"error": "true"}
+    if not "action" in qs:
+        return {"error": True, "message": "No query string action provided."}
     if "apiKey" in qs:
-        ctrl = FormAdmin()
+        ctrl = FormAdmin(qs['apiKey'])
+        return {"res": "a", "b": ctrl.get()}
         pass
     else:
         ctrl = FormRender()
-        if qs["action"] == "getForm":
+        if qs["action"] == "renderForm":
             return ctrl.render_form_by_id(qs["id"])
         else:
             return {"a":"123"}
     
 def handle(event, context):
-    if not "queryStringParameters" in event:
-        qs = {}
+    if not "queryStringParameters" in event or not event["queryStringParameters"]:
+        results = {"error": True, "message": "No query string provided."}
     else:
         qs = event["queryStringParameters"]
-    results = {"res": parseQuery(qs) }
+        results = {"res": parseQuery(qs) }
     #if "pathParameters" in event:
     #    results["b"] = event["a"]
     return make_response_success(results)

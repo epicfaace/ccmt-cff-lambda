@@ -17,16 +17,24 @@ AWS_SDK_LOAD_CONFIG=1
 apex deploy
 
 apex deploy && apex invoke forms < event.json
+apex deploy --alias DEV && apex invoke --alias DEV forms < event.json
+# Dev / prod workflow
+apex deploy --alias DEV
+apex deploy --alias PROD
 
-# other commands
+# other commands (old)
+API gateway: DO:
 
-pip install pymongo -t .
-
-
-aws lambda add-permission --function-name arn:aws:lambda:us-east-2:870467738435:function:gcmw-cff-render-form:DEV --source-arn 'arn:aws:execute-api:us-east-2:870467738435:ajd5vh06d8/*/*/gcmw-cff-render-form' --principal apigateway.amazonaws.com --statement-id 5ec070ac-b78f-4722-8572-44bfc618b4e4 --action lambda:InvokeFunction
-
-aws lambda add-permission --function-name arn:aws:lambda:us-east-2:870467738435:function:gcmw-cff-render-form:${stageVariables.alias} --source-arn 'arn:aws:execute-api:us-east-2:870467738435:ajd5vh06d8/*/*/gcmw-cff-render-form' --principal apigateway.amazonaws.com --statement-id 5ec070ac-b78f-4722-8572-44bfc618b4e4 --action lambda:InvokeFunction
+GCMW_CFF_forms:DEV
+GCMW_CFF_forms:PROD
+GCMW_CFF_forms:${stageVariables.alias}
 
 gcmw-cff-render-form:${stageVariables.alias}
 
-action=getForm&id=5a3bdfd5059638058c8ef478
+## Form admin:
+Form List: https://ajd5vh06d8.execute-api.us-east-2.amazonaws.com/dev/gcmw-cff-render-form?action=formList&apiKey=test
+Edit Forms (POST): https://ajd5vh06d8.execute-api.us-east-2.amazonaws.com/dev/gcmw-cff-render-form?action=editForm&apiKey=test
+
+## Form render:
+Render Form: https://ajd5vh06d8.execute-api.us-east-2.amazonaws.com/dev/gcmw-cff-render-form?action=renderForm&id=59dbf12b734d1d18c05ebd21
+Submit Form (POST): https://ajd5vh06d8.execute-api.us-east-2.amazonaws.com/dev/gcmw-cff-render-form?action=submitForm&id=id=59dbf12b734d1d18c05ebd21

@@ -1,6 +1,8 @@
 {
     "queryStringParameters": {
         "action": "getForm",
-        "id": "5a3bdfd5059638058c8ef478"
+        "id": "59dbf12b734d1d18c05ebd21",
+        "action": "formList",
+        "apiKey": "test"
     }
 }

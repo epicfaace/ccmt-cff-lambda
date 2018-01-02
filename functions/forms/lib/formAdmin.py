@@ -1,31 +1,14 @@
 from .mongoConnection import MongoConnection
-from bson import ObjectId
+from bson import ObjectId, json_util
 
 class FormAdmin(MongoConnection):
-    def render_form_by_id(formId, version=0):
-        """Renders form with its schema and uiSchema resolved.
-        """
-        return self.db.forms.aggregate([
-        {"$match": {"_id": ObjectId(formId)} },
-        {"$lookup":
-            {
-                "from": "schemas",
-                "localField": "schema",
-                "foreignField": "_id",
-                "as": "schemaRef"
-            }
-        },
-        {"$lookup":
-            {
-                "from": "schemaModifiers",
-                "localField": "schemaModifier",
-                "foreignField": "_id",
-                "as": "schemaModifierRef"
-            }
-        },
-        { "$project": { 
-                "name": 1,
-                "schema": { "$arrayElemAt": [ "$schemaRef", 0 ] },
-                "schemaModifier": { "$arrayElemAt": [ "$schemaModifierRef", 0 ] } 
-            }} 
-        ])
+    def __init__(self, api_key):
+        super(FormAdmin, self).__init__()
+        center = self.db.centers.find_one({"apiKey": api_key})
+        if not center:
+            raise Exception("Incorrect API Key. No center found for the specified API key.")
+        self.centerId = center["_id"]
+        if not self.centerId:
+            raise Exception("Center found, but no center ID was existing.")
+    def get(self):
+        return self.centerId
