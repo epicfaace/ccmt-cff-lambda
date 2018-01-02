@@ -35,12 +35,13 @@ def parseQuery(qs):
         ctrl = FormAdmin(qs['apiKey'])
         if qs["action"] == "formList":
             return ctrl.list_forms()
+        elif qs["action"] == "formResponses":
+            return ctrl.get_form_responses(qs["id"])
         else:
             return {"err": "invalid request"}
-        pass
     else:
         ctrl = FormRender()
-        if qs["action"] == "renderForm":
+        if qs["action"] == "formRender":
             return ctrl.render_form_by_id(qs["id"])
         else:
             return {"a":"123"}

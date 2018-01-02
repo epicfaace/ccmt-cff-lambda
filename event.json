@@ -2,7 +2,7 @@
     "queryStringParameters": {
         "action": "getForm",
         "id": "59dbf12b734d1d18c05ebd21",
-        "action": "formList",
+        "action": "formResponses",
         "apiKey": "test"
     }
 }

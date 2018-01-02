@@ -12,5 +12,7 @@ class FormAdmin(MongoConnection):
             raise Exception("Center found, but no center ID was existing.")
     def list_forms(self):
         return self.db.forms.find({"center": self.centerId}, {"name": 1, "_id": 1})
+    def get_form_responses(self, formId):
+        return self.db.responses.find({"form": ObjectId(formId)})
     def get(self):
         return self.centerId
