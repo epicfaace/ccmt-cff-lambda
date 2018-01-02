@@ -4,9 +4,9 @@ from bson.objectid import ObjectId
 from lib.formRender import FormRender
 from lib.formAdmin import FormAdmin
 
-def make_response_success(body):
+def make_response(body, statuscode):
     return {
-        "statusCode": 200,
+        "statusCode": statuscode,
         "headers": {
             'Access-Control-Allow-Origin': '*'
         },
@@ -30,7 +30,7 @@ def get_responses_for_form(formId):
     pass
 def parseQuery(qs):
     if not "action" in qs:
-        return {"error": True, "message": "No query string action provided."}
+        raise Exception("No query string action provided.")
     if "apiKey" in qs:
         ctrl = FormAdmin(qs['apiKey'])
         if qs["action"] == "formList":
@@ -38,20 +38,24 @@ def parseQuery(qs):
         elif qs["action"] == "formResponses":
             return ctrl.get_form_responses(qs["id"])
         else:
-            return {"err": "invalid request"}
+            raise Exception("Action not found.")
     else:
         ctrl = FormRender()
         if qs["action"] == "formRender":
             return ctrl.render_form_by_id(qs["id"])
         else:
-            return {"a":"123"}
+            raise Exception("Action not found.")
     
 def handle(event, context):
-    if not "queryStringParameters" in event or not event["queryStringParameters"]:
-        results = {"error": True, "message": "No query string provided."}
-    else:
-        qs = event["queryStringParameters"]
-        results = {"res": parseQuery(qs) }
+    try:
+        if not "queryStringParameters" in event or not event["queryStringParameters"]:
+            raise Exception("No query string provided.")
+        else:
+            qs = event["queryStringParameters"]
+            results = {"res": parseQuery(qs) }
+    except Exception as e:
+        results = {"error": True, "message": e.__str__()}
+        return make_response(results, 400)
     #if "pathParameters" in event:
     #    results["b"] = event["a"]
-    return make_response_success(results)
+    return make_response(results, 200)
