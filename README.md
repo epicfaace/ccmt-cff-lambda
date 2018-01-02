@@ -6,6 +6,18 @@ workon gcmw-cff-lambda
 pip install -r requirements.txt -t .
 Zip file and upload to lambda
 
+# Setup (new) with apex
+
+aws configure --profile ashwin-cff-lambda
+(us-east-2)
+
+apex init --profile ashwin-cff-lambda
+
+AWS_SDK_LOAD_CONFIG=1
+apex deploy
+
+apex deploy && apex invoke forms < event.json
+
 # other commands
 
 pip install pymongo -t .

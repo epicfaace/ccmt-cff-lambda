@@ -1,8 +1,8 @@
 from bson import json_util
 import json
 from bson.objectid import ObjectId
-from gcmw.formRender import FormRender
-from gcmw.formAdmin import FormAdmin
+from lib.formRender import FormRender
+from lib.formAdmin import FormAdmin
 
 def make_response_success(body):
     return {
@@ -41,7 +41,7 @@ def parseQuery(qs):
         else:
             return {"a":"123"}
     
-def lambda_handler(event, context):
+def handle(event, context):
     if not "queryStringParameters" in event:
         qs = {}
     else:

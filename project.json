@@ -1,0 +1,12 @@
+{
+  "name": "GCMW_CFF",
+  "description": "Chinmaya Forms Framework API",
+  "memory": 128,
+  "timeout": 5,
+  "role": "arn:aws:iam::870467738435:role/GCMW_CFF_lambda_function",
+  "environment": {
+    "CONN_STRING": "mongodb://test:test@ds061954.mlab.com:61954/wp_acharya",
+    "DB_NAME": "wp_acharya"
+  },
+  "profile": "ashwin-cff-lambda"
+}

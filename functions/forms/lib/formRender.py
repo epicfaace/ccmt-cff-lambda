@@ -2,7 +2,7 @@ from .mongoConnection import MongoConnection
 from bson import ObjectId
 
 class FormRender(MongoConnection):
-    def render_form_by_id(formId, version=0):
+    def render_form_by_id(self, formId, version=0):
         """Renders form with its schema and uiSchema resolved.
         """
         return self.db.forms.aggregate([
