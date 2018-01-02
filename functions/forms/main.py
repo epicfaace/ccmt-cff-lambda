@@ -33,7 +33,10 @@ def parseQuery(qs):
         return {"error": True, "message": "No query string action provided."}
     if "apiKey" in qs:
         ctrl = FormAdmin(qs['apiKey'])
-        return {"res": "a", "b": ctrl.get()}
+        if qs["action"] == "formList":
+            return ctrl.list_forms()
+        else:
+            return {"err": "invalid request"}
         pass
     else:
         ctrl = FormRender()
