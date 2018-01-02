@@ -35,8 +35,8 @@ gcmw-cff-render-form:${stageVariables.alias}
 Form List: https://ajd5vh06d8.execute-api.us-east-2.amazonaws.com/dev/gcmw-cff-render-form?action=formList&apiKey=test
 Form Responses: https://ajd5vh06d8.execute-api.us-east-2.amazonaws.com/dev/gcmw-cff-render-form?action=formResponses&id=59dbf12b734d1d18c05ebd21
 
-Edit Forms (POST): https://ajd5vh06d8.execute-api.us-east-2.amazonaws.com/dev/gcmw-cff-render-form?action=editForm&apiKey=test
+Edit Forms (POST): https://ajd5vh06d8.execute-api.us-east-2.amazonaws.com/dev/gcmw-cff-render-form?action=formEdit&apiKey=test
 
 ## Form render:
-Render Form: https://ajd5vh06d8.execute-api.us-east-2.amazonaws.com/dev/gcmw-cff-render-form?action=renderForm&id=59dbf12b734d1d18c05ebd21
-Submit Form (POST): https://ajd5vh06d8.execute-api.us-east-2.amazonaws.com/dev/gcmw-cff-render-form?action=submitForm&id=59dbf12b734d1d18c05ebd21
+Render Form: https://ajd5vh06d8.execute-api.us-east-2.amazonaws.com/dev/gcmw-cff-render-form?action=formRender&id=59dbf12b734d1d18c05ebd21
+Submit Form (POST): https://ajd5vh06d8.execute-api.us-east-2.amazonaws.com/dev/gcmw-cff-render-form?action=formSubmit&id=59dbf12b734d1d18c05ebd21

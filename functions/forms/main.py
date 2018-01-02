@@ -3,6 +3,7 @@ import json
 from bson.objectid import ObjectId
 from lib.formRender import FormRender
 from lib.formAdmin import FormAdmin
+import traceback
 
 def make_response(body, statuscode):
     return {
@@ -22,13 +23,7 @@ def get_schemaModifer(schemaId, version):
 def update_or_create_form(apiKey, schema, schemaModifier, formId=0, version=1):
     # Updates form or creates form.
     pass
-def get_form_list(apiKey):
-    # asdasd
-    pass
-def get_responses_for_form(formId):
-    #asd
-    pass
-def parseQuery(qs):
+def parseQuery(qs, event):
     if not "action" in qs:
         raise Exception("No query string action provided.")
     if "apiKey" in qs:
@@ -43,6 +38,8 @@ def parseQuery(qs):
         ctrl = FormRender()
         if qs["action"] == "formRender":
             return ctrl.render_form_by_id(qs["id"])
+        elif qs["action"] == "formSubmit":
+            return ctrl.submit_form(qs["id"], (event["body"]))
         else:
             raise Exception("Action not found.")
     
@@ -52,9 +49,9 @@ def handle(event, context):
             raise Exception("No query string provided.")
         else:
             qs = event["queryStringParameters"]
-            results = {"res": parseQuery(qs) }
-    except Exception as e:
-        results = {"error": True, "message": e.__str__()}
+            results = {"res": parseQuery(qs, event) }
+    except Exception:
+        results = {"error": True, "message": traceback.format_exc()}
         return make_response(results, 400)
     #if "pathParameters" in event:
     #    results["b"] = event["a"]
