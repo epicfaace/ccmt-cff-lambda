@@ -39,7 +39,7 @@ def parseQuery(qs, event):
         if qs["action"] == "formRender":
             return ctrl.render_form_by_id(qs["id"])
         elif qs["action"] == "formSubmit":
-            return ctrl.submit_form(qs["id"], (event["body"]))
+            return ctrl.submit_form(qs["id"], event["body"])
         else:
             raise Exception("Action not found.")
     

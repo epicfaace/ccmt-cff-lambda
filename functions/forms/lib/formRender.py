@@ -1,5 +1,6 @@
 from .mongoConnection import MongoConnection
 from bson import ObjectId
+import datetime
 
 class FormRender(MongoConnection):
     def render_form_by_id(self, formId):
@@ -30,5 +31,14 @@ class FormRender(MongoConnection):
             }} 
         ])
     def submit_form(self, formId, response_data):
-        result = self.db.responses.insert_one({"value": "a"})
-        return result.inserted_id
+        formId = ObjectId(formId)
+        form = self.db.forms.find_one({"_id": formId}, {"schema": 1, "schemaModifier": 1})
+        result = self.db.responses.insert_one({
+            "value": response_data,
+            "date_last_modified": datetime.datetime.now(),
+            "date_created": datetime.datetime.now(),
+            "schema": form['schema'],
+            "schemaModifer": form['schemaModifier'],
+            "form": formId
+        })
+        return {"success": True, "inserted_id": result.inserted_id}
