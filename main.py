@@ -1,11 +1,8 @@
-from pymongo import MongoClient
-import os
 from bson import json_util
 import json
 from bson.objectid import ObjectId
-
-client = MongoClient(os.getenv("CONN_STRING"))
-db = client[os.getenv("DB_NAME")]
+from gcmw.formRender import FormRender
+from gcmw.formAdmin import FormAdmin
 
 def make_response_success(body):
     return {
@@ -28,19 +25,21 @@ def update_or_create_form(apiKey, schema, schemaModifier, formId=0, version=1):
 def get_form_list(apiKey):
     # asdasd
     pass
-def get_form_by_id(formId, version=0):
-    return db.forms.find_one({"_id": ObjectId(formId)})
-    pass
 def get_responses_for_form(formId):
     #asd
     pass
 def parseQuery(qs):
     if (not "action" in qs):
         return {"error": "true"}
-    if qs["action"] == "getForm":
-        return get_form_by_id(qs["id"])
+    if "apiKey" in qs:
+        ctrl = FormAdmin()
+        pass
     else:
-        return {"a":"123"}
+        ctrl = FormRender()
+        if qs["action"] == "getForm":
+            return ctrl.render_form_by_id(qs["id"])
+        else:
+            return {"a":"123"}
     
 def lambda_handler(event, context):
     if not "queryStringParameters" in event:
