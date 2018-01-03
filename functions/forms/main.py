@@ -3,6 +3,7 @@ import json
 from bson.objectid import ObjectId
 from lib.formRender import FormRender
 from lib.formAdmin import FormAdmin
+from lib.ipnHandler import IpnHandler
 import traceback
 
 def make_response(body, statuscode):
@@ -39,7 +40,7 @@ def parseQuery(qs, event):
         if qs["action"] == "formRender":
             return ctrl.render_form_by_id(qs["id"])
         elif qs["action"] == "formSubmit":
-            return ctrl.submit_form(qs["id"], event["body"])
+            return ctrl.submit_form(qs["id"], json.loads(event["body"]))
         else:
             raise Exception("Action not found.")
     
@@ -49,6 +50,10 @@ def handle(event, context):
             raise Exception("No query string provided.")
         else:
             qs = event["queryStringParameters"]
+            if qs["action"] == "ipn":
+                handler = IpnHandler()
+                results = handler.ipnHandler(event["body"])
+                return make_response("", 200)
             results = {"res": parseQuery(qs, event) }
     except Exception:
         results = {"error": True, "message": traceback.format_exc()}

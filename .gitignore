@@ -3,3 +3,8 @@ gridfs
 pymongo*
 *.pyc
 *.zip
+requests*
+certifi*
+chardet*
+idna*
+urllib3*
