@@ -2,6 +2,7 @@ import sys
 import urllib.parse
 import requests
 import datetime
+from bson import ObjectId
 from .mongoConnection import MongoConnection
 
 """
@@ -35,16 +36,20 @@ class IpnHandler:
         # Check return message and take action as needed
         mongoConnection = MongoConnection()
         if r.text == 'VERIFIED':
-            # payment_status  completed. 
-            mongoConnection.db.ipn.insert_one({
-                "date_created": datetime.datetime.now(),
-                "data": params
-            })
+            # payment_status  completed.
+            mongoConnection.db.responses.update_one({
+                "_id": ObjectId(params["custom"])
+                },
+                {"$set": {
+                    "IPN": params, "IPN_DATE": datetime.datetime.now()
+                    }
+                }
+            )
             return params
         elif r.text == 'INVALID':
             mongoConnection.db.ipn.insert_one({
                 "date_created": datetime.datetime.now(),
-                "data": "invalid",
+                "success": False,
                 "params": params
             })
             return "invalid"
