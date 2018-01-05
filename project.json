@@ -1,12 +1,12 @@
 {
-  "name": "cff",
-  "description": "Chinmaya Forms Framework",
+  "name": "CCMT_CFF",
+  "description": "Chinmaya Forms Framework Backend",
   "memory": 128,
   "timeout": 5,
-  "role": "arn:aws:iam::596332473146:role/cff_lambda_function",
+  "role": "arn:aws:iam::131049698002:role/CCMT_CFF_lambda_function",
+  "profile": "ccmt-cff-lambda",
   "environment": {
     "CONN_STRING": "mongodb://test:test@ds061954.mlab.com:61954/wp_acharya",
     "DB_NAME": "wp_acharya"
-  },
-  "profile": "ccmt-dev-cff-lambda"
+  }
 }

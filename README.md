@@ -12,18 +12,18 @@ apex deploy --alias PROD
 # other commands (old)
 API gateway: DO:
 
-cff_forms:DEV
-cff_forms:PROD
+CCMT_CFF_forms:DEV
+CCMT_CFF_forms:PROD
 cff_forms:${stageVariables.alias}
 
 ## Form admin:
-Form List: https://lf2n0amabe.execute-api.us-east-2.amazonaws.com/dev/form?action=formList&apiKey=test
-Form Responses: https://lf2n0amabe.execute-api.us-east-2.amazonaws.com/dev/form?action=formResponses&id=59dbf12b734d1d18c05ebd21
+Form List: https://l5nrf4co1g.execute-api.us-east-1.amazonaws.com/prod/forms?action=formList&apiKey=test
+Form Responses: https://l5nrf4co1g.execute-api.us-east-1.amazonaws.com/prod/forms?action=formResponses&id=59dbf12b734d1d18c05ebd21
 
-Edit Forms (POST): https://lf2n0amabe.execute-api.us-east-2.amazonaws.com/dev/form?action=formEdit&apiKey=test
+Edit Forms (POST): https://l5nrf4co1g.execute-api.us-east-1.amazonaws.com/prod/forms?action=formEdit&apiKey=test
 
 ## Form render:
-Render Form: https://lf2n0amabe.execute-api.us-east-2.amazonaws.com/dev/form?action=formRender&id=59dbf12b734d1d18c05ebd21
-Submit Form (POST): https://lf2n0amabe.execute-api.us-east-2.amazonaws.com/dev/form?action=formSubmit&id=59dbf12b734d1d18c05ebd21
+Render Form: https://l5nrf4co1g.execute-api.us-east-1.amazonaws.com/prod/forms?action=formRender&id=59dbf12b734d1d18c05ebd21
+Submit Form (POST): https://l5nrf4co1g.execute-api.us-east-1.amazonaws.com/prod/forms?action=formSubmit&id=59dbf12b734d1d18c05ebd21
 
-IPN handler: https://ajd5vh06d8.execute-api.us-east-2.amazonaws.com/prod/gcmw-cff-render-form?action=ipn
+IPN handler: https://l5nrf4co1g.execute-api.us-east-1.amazonaws.com/prod/forms?action=ipn

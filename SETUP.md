@@ -34,16 +34,47 @@ Instructions for initial setup with a new AWS account.
 }
 ```
 2. Configure AWS profile with credentials from previous screen.
-```aws configure --profile ccmt-dev-cff-lambda```
+```aws configure --profile ccmt-cff-lambda```
 AWS Access Key ID: prev screen
 AWS Secret Access Key: prev screen
-Default region name: us-east-2
+Default region name: us-east-1
 Default output format: JSON
 3. Use AWS profile with apex.
-apex init --profile ccmt-dev-cff-lambda
+apex init --profile ccmt-cff-lambda
 4. Add following to your project.json:
-"profile": "ccmt-dev-cff-lambda"
+```
+"profile": "ccmt-cff-lambda",
 "environment": {
+}
+```
+5. Add the following to the function.json (inside the app)
+```
+{
+    "description": "NOVA APPROVAL REST API",
+    "hooks":{
+      "build": "pip install -r requirements.txt -t ."
+    }
+}
+```
+6. Sending mail
+Add the following policy to the lambda function role:
+Email sending role: http://www.wisdomofjim.com/blog/sending-an-email-from-aws-lambda-function-in-nodejs-with-aws-simple-email-service
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "ses:SendEmail",
+                "ses:SendRawEmail"
+            ],
+            "Resource": "*"
+        }
+    ]
 }
 
 apex deploy
