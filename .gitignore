@@ -8,3 +8,9 @@ certifi*
 chardet*
 idna*
 urllib3*
+bleach*
+html2*
+html5*
+six-*
+webencodings*
+six.py

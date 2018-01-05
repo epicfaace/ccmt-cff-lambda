@@ -4,15 +4,16 @@ from botocore.exceptions import ClientError
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
+import bleach
+import html2text
 
 class Emailer():
     def send_email(self,
         toEmail="aramaswamis@gmail.com",
         fromEmail="webmaster@chinmayamission.com",
-        fromName="Webmaster"
+        fromName="Webmaster",
         subject="Confirmation email",
-        msgTitleText="Confirmation"
-        msgBodyText="Thank you for registering."
+        msgBody="<h1>Confirmation</h1><br><p>Thank you for registering.</p>"
         ):
         # Replace sender@example.com with your "From" address.
         # This address must be verified with Amazon SES.
@@ -37,18 +38,10 @@ class Emailer():
         # ATTACHMENT = "path/to/customers-to-contact.xlsx"
 
         # The email body for recipients with non-HTML email clients.
-        BODY_TEXT = "{}\r\n\r\n{}".format(msgTitleText, msgBodyText)
+        BODY_TEXT = html2text.html2text(msgBody)
 
         # The HTML body of the email.
-        BODY_HTML = """\
-        <html>
-        <head></head>
-        <body>
-        <h1>{}</h1>
-        <p>{}</p>
-        </body>
-        </html>
-        """.format(msgTitleText, msgBodyText)
+        BODY_HTML = bleach.linkify(bleach.clean(msgBody))
 
         # The character encoding for the email.
         CHARSET = "utf-8"
