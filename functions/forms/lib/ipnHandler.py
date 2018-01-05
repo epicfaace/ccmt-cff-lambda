@@ -35,13 +35,16 @@ class IpnHandler:
 
         # Check return message and take action as needed
         mongoConnection = MongoConnection()
+        paramDict = dict(params)
         if r.text == 'VERIFIED':
             # payment_status  completed.
             mongoConnection.db.responses.update_one({
-                "_id": ObjectId(params["custom"])
+                "_id": ObjectId(paramDict["custom"])
                 },
                 {"$set": {
-                    "IPN": params, "IPN_DATE": datetime.datetime.now()
+                    "IPN_STATUS": paramDict["payment_status"],
+                    "PAYMENT_VERIFIED": paramDict["payment_status"] == "Completed",
+                    "IPN": paramDict, "IPN_DATE": datetime.datetime.now()
                     }
                 }
             )
