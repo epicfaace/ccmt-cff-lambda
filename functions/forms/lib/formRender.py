@@ -1,6 +1,7 @@
 from .mongoConnection import MongoConnection
 from bson import ObjectId
 import datetime
+from .emailer import Emailer
 
 class FormRender(MongoConnection):
     def render_form_by_id(self, formId):
@@ -41,4 +42,6 @@ class FormRender(MongoConnection):
             "schemaModifer": form['schemaModifier'],
             "form": formId
         })
+        emailer = Emailer()
+        emailer.send_email(response_data["email"])
         return {"success": True, "inserted_id": result.inserted_id}

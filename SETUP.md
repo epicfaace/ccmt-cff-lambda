@@ -76,6 +76,7 @@ Email sending role: http://www.wisdomofjim.com/blog/sending-an-email-from-aws-la
         }
     ]
 }
+```
 
 apex deploy
 

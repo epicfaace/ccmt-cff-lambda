@@ -1,9 +1,6 @@
 {
     "queryStringParameters": {
         "id": "59dbf12b734d1d18c05ebd21",
-        "action": "formSubmit"
-    },
-    "body": {
-        "a": "b"
+        "action": "formRender"
     }
 }
