@@ -1,7 +1,6 @@
 from .mongoConnection import MongoConnection
 from bson import ObjectId
 import datetime
-from .emailer import Emailer
 
 class FormRender(MongoConnection):
     def render_form_by_id(self, formId):
@@ -31,17 +30,24 @@ class FormRender(MongoConnection):
                 "schemaModifier": { "$arrayElemAt": [ "$schemaModifierRef", 0 ] } 
             }} 
         ])
-    def submit_form(self, formId, response_data):
+    def submit_form(self, formId, response_data, modifyLink=""):
         formId = ObjectId(formId)
         form = self.db.forms.find_one({"_id": formId}, {"schema": 1, "schemaModifier": 1})
+        schemaModifier = self.db.schemaModifiers.find_one({"_id": form['schemaModifier']}, {"paymentInfo": 1, "confirmationEmailInfo": 1})
         result = self.db.responses.insert_one({
+            "modifyLink": modifyLink,
             "value": response_data,
             "date_last_modified": datetime.datetime.now(),
             "date_created": datetime.datetime.now(),
             "schema": form['schema'],
             "schemaModifer": form['schemaModifier'],
-            "form": formId
+            "form": formId,
+            "paymentInfo": schemaModifier['paymentInfo'],
+            "confirmationEmailInfo": schemaModifier['confirmationEmailInfo']
         })
-        emailer = Emailer()
-        emailer.send_email(response_data["email"])
         return {"success": True, "inserted_id": result.inserted_id}
+    def edit_response_form(self, responseId, response_data):
+        self.db.responses.update_one({
+            "_id": responseId
+        })
+        pass
