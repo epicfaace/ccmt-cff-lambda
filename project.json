@@ -6,7 +6,7 @@
   "role": "arn:aws:iam::131049698002:role/CCMT_CFF_lambda_function",
   "profile": "ccmt-cff-lambda",
   "environment": {
-    "CONN_STRING": "mongodb://webapi:gulo489%40@ds141657.mlab.com:41657/cff",
+    "CONN_STRING": "mongodb://webapi:alsi489%40@ds141657.mlab.com:41657/cff",
     "DB_NAME": "cff"
   }
 }

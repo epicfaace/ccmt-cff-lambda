@@ -6,6 +6,7 @@ from bson import ObjectId
 from .mongoConnection import MongoConnection
 from .emailer import Emailer
 import json
+from json2html import json2html
 
 """
 action=ipn&cmd=_notify-validate&mc_gross=19.95&protection_eligibility=Eligible&address_status=confirmed&payer_id=LPLWNMTBWMFAY&tax=0.00&address_street=1+Main+St&payment_date=20%3A12%3A59+Jan+13%2C+2009+PST&payment_status=Completed&charset=windows-1252&address_zip=95131&first_name=Test&mc_fee=0.88&address_country_code=US&address_name=Test+User&notify_version=2.6&custom=&payer_status=verified&address_country=United+States&address_city=San+Jose&quantity=1&verify_sign=AtkOfCXbDm2hu0ZELryHFjY-Vb7PAUvS6nMXgysbElEn9v-1XcmSoGtf&payer_email=gpmac_1231902590_per%40paypal.com&txn_id=61E67681CH3238416&payment_type=instant&last_name=User&address_state=CA&receiver_email=gpmac_1231902686_biz%40paypal.com&payment_fee=0.88&receiver_id=S8XGHLYDW9T3S&txn_type=express_checkout&item_name=&mc_currency=USD&item_number=&residence_country=US&test_ipn=1&handling_amount=0.00&transaction_subject=&payment_gross=19.95&shipping=0.00
@@ -101,14 +102,14 @@ class IpnHandler:
             )
             response = mongoConnection.db.responses.find_one({
                 "_id": responseId
-            }, {"value": 1, "confirmationEmailInfo": 1, "paymentInfo": 1})
+            }, {"value": 1, "confirmationEmailInfo": 1, "paymentInfo": 1, "modifyLink": 1})
             if "confirmationEmailInfo" in response and response["confirmationEmailInfo"]:
                 toField = response["confirmationEmailInfo"]["toField"]
                 msgBody = response["confirmationEmailInfo"].get("message", "")
                 if response["confirmationEmailInfo"]["showResponse"]:
-                    msgBody += "<br><br>" + json.dumps(response["value"])
+                    msgBody += "<br><br>" + json2html.convert(response["value"], clubbing=False, table_attributes="'border'=1")
                 if response["confirmationEmailInfo"]["showModifyLink"] and "modifyLink" in response:
-                    msgBody += "<br><br>Modify your response by going to this link: {}".format(response["modifyLink"] + "#" + responseId)
+                    msgBody += "<br><br>Modify your response by going to this link: {}".format(response["modifyLink"] + "#" + str(responseId))
                 # todo: check amounts and Completed status, and then send.
                 emailer = Emailer()
                 emailer.send_email(toEmail=response["value"][toField],
@@ -116,7 +117,6 @@ class IpnHandler:
                                     fromName=response["confirmationEmailInfo"].get("fromName", "Webmaster"),
                                     subject=response["confirmationEmailInfo"].get("subject", "Confirmation Email"),
                                     msgBody=msgBody)
-
             return params
         elif r.text == 'INVALID':
             mongoConnection.db.ipn.insert_one({

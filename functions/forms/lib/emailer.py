@@ -6,6 +6,22 @@ from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
 import bleach
 import html2text
+from pynliner import Pynliner
+
+ccmt_email_css = """
+table {
+    border: 1px solid black;
+}
+table th {
+        text-transform: capitalize;
+}
+table th, table td {
+    padding: 5px;
+}
+ul {
+    list-style-type: none;
+}
+"""
 
 class Emailer():
     def send_email(self,
@@ -41,7 +57,7 @@ class Emailer():
         BODY_TEXT = html2text.html2text(msgBody)
 
         # The HTML body of the email.
-        BODY_HTML = bleach.linkify(bleach.clean(msgBody))
+        BODY_HTML = Pynliner().from_string(msgBody).with_cssString(ccmt_email_css).run() # bleach.linkify(bleach.clean(msgBody))
 
         # The character encoding for the email.
         CHARSET = "utf-8"
