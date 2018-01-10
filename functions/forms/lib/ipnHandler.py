@@ -107,9 +107,9 @@ class IpnHandler:
                 toField = response["confirmationEmailInfo"]["toField"]
                 msgBody = response["confirmationEmailInfo"].get("message", "")
                 if response["confirmationEmailInfo"]["showResponse"]:
-                    msgBody += "<br><br>" + json2html.convert(response["value"], clubbing=False, table_attributes="'border'=1")
+                    msgBody += "<br><br>" + json2html.convert(response["value"], clubbing=False, table_attributes="'border'=0")
                 if response["confirmationEmailInfo"]["showModifyLink"] and "modifyLink" in response:
-                    msgBody += "<br><br>Modify your response by going to this link: {}".format(response["modifyLink"] + "#" + str(responseId))
+                    msgBody += "<br><br>Modify your response by going to this link: {}".format(response["modifyLink"] + "#resid=" + str(responseId))
                 # todo: check amounts and Completed status, and then send.
                 emailer = Emailer()
                 emailer.send_email(toEmail=response["value"][toField],

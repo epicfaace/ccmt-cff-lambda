@@ -40,14 +40,29 @@ class FormRender(MongoConnection):
             "date_last_modified": datetime.datetime.now(),
             "date_created": datetime.datetime.now(),
             "schema": form['schema'],
-            "schemaModifer": form['schemaModifier'],
+            "schemaModifier": form['schemaModifier'],
             "form": formId,
             "paymentInfo": schemaModifier['paymentInfo'],
             "confirmationEmailInfo": schemaModifier['confirmationEmailInfo']
         })
         return {"success": True, "inserted_id": result.inserted_id}
+    def render_response_and_schemas(self, responseId):
+        """Renders response, plus schema and schemaModifier for that particular response.
+        Used for editing responses."""
+        response = self.db.responses.find_one({"_id": ObjectId(responseId)})
+        schema = self.db.schemas.find_one({"_id": response["schema"]})
+        schemaModifier = self.db.schemaModifiers.find_one({"_id": response["schemaModifier"]})
+        return [{
+            "formData": response,
+            "schema": schema,
+            "schemaModifier": schemaModifier
+        }]
     def edit_response_form(self, responseId, response_data):
         self.db.responses.update_one({
             "_id": responseId
+        },
+        {
+            "$set": {
+                "value": response_data
+            }
         })
-        pass

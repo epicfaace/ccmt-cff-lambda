@@ -18,7 +18,7 @@ def make_response(body, statuscode):
 def get_schema(schemaId, version):
     #asd
     pass
-def get_schemaModifer(schemaId, version):
+def get_schemaModifier(schemaId, version):
     pass
     #asdads
 def update_or_create_form(apiKey, schema, schemaModifier, formId=0, version=1):
@@ -39,6 +39,8 @@ def parseQuery(qs, event):
         ctrl = FormRender()
         if qs["action"] == "formRender":
             return ctrl.render_form_by_id(qs["id"])
+        if qs["action"] == "getResponseAndSchemas":
+            return ctrl.render_response_and_schemas(qs["id"])
         elif qs["action"] == "formSubmit":
             return ctrl.submit_form(qs["id"], json.loads(event["body"]), qs.get("modifyLink", ""))
         elif qs["action"] == "formResponseEdit":
