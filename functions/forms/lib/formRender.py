@@ -1,5 +1,4 @@
 from .dbConnection import DBConnection
-from bson import ObjectId
 import datetime
 import uuid
 # Ref:
@@ -15,8 +14,8 @@ class FormRender(DBConnection):
     def set_form_schemas(self, form):
         """Renders form with its schema and uiSchema resolved.
         """
-        form['schema'] = self.schemas.get_item(Key=form['schema'])
-        form['schemaModifier'] = self.schemaModifiers.get_item(Key=form['schemaModifier'])
+        form['schema'] = self.schemas.get_item(Key=form['schema'])["Item"]
+        form['schemaModifier'] = self.schemaModifiers.get_item(Key=form['schemaModifier'])["Item"]
         return form
     def get_form(self, id, version):
         return self.forms.get_item(Key={"id": id, "version": version})["Item"]
@@ -25,20 +24,16 @@ class FormRender(DBConnection):
     def get_schemaModifier(self, id, version):
         return self.schemaModifiers.get_item(Key={"id": id, "version": version})["Item"]
     def update_form(self, id, version, schemaId, schemaModifierId):
-        return self.client.update_item(
-            TableName='ccmt_cff_forms',
+        # Not used.
+        return self.forms.update_item(
             Key={
-                'id': {
-                    'S': str(id)
-                },
-                'version': {
-                    'N': str(version)
-                }
+                'id': str(id),
+                'version': str(version)
             },
             UpdateExpression="set schema = :s, schemaModifier =:sm",
             ExpressionAttributeValues={
-                ':s': {"M": schemaId},
-                ':sm': {"M": schemaModifierId}
+                ':s': schemaId,
+                ':sm': schemaModifierId
             },
             ReturnValues="UPDATED_NEW"
         )
@@ -48,32 +43,33 @@ class FormRender(DBConnection):
         resId = str(uuid.uuid4())
         self.responses.put_item(
             Item={
-            "id": resId,
+            "formId": formId, # partition key
+            "responseId": resId, # sort key
             "modifyLink": modifyLink,
             "value": response_data,
             "date_last_modified": datetime.datetime.now().isoformat(),
             "date_created": datetime.datetime.now().isoformat(),
             "form": {
-                    'id': str(formId),
+                    'id': formId,
                     'version': formVersion
             }, # id, version.
             "paymentInfo": schemaModifier['paymentInfo'],
             "confirmationEmailInfo": schemaModifier['confirmationEmailInfo']
         })
         return {"success": True, "inserted_id": resId }
-    def render_response_and_schemas(self, responseId):
+    def render_response_and_schemas(self, formId, responseId):
         """Renders response, plus schema and schemaModifier for that particular response.
         Used for editing responses."""
-        response = self.responses.get_item(Key={"id":responseId})
-        form = self.forms.get_item(Key=response['form'])
+        response = self.responses.get_item(Key={"formId": formId, "responseId": responseId})["Item"]
+        form = self.forms.get_item(Key={"id": formId})["Item"]
         self.set_form_schemas(form)
         return [{
             "formData": response,
             "schema": form['schema'],
             "schemaModifier": form['schemaModifier']
         }]
-    def edit_response_form(self, responseId, response_data):
-        self.db.responses.update_one({
+    def edit_response_form(self, formId, formVersion, responseId, response_data):
+        """self.db.responses.update_one({
             "_id": responseId
         },
         {
@@ -81,4 +77,5 @@ class FormRender(DBConnection):
                 "value": response_data,
                 "date_last_modified": datetime.datetime.now()
             }
-        })
+        })"""
+        pass

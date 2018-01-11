@@ -1,34 +1,36 @@
-from .mongoConnection import MongoConnection
-from bson import ObjectId, json_util
+from .dbConnection import DBConnection
+from boto3.dynamodb.conditions import Key
 
-class FormAdmin(MongoConnection):
+class FormAdmin(DBConnection):
     def __init__(self, apiKey):
         super(FormAdmin, self).__init__()
-        center = self.db.centers.find_one({"apiKey": apiKey})
-        if not center:
+        centers = self.centers.query(
+            KeyConditionExpression=Key('apiKey').eq(apiKey)
+        )
+        if not center or not center["Items"] or not len(center["Items"]):
            raise Exception("Incorrect API Key. No center found for the specified API key.")
-        self.centerId = center["_id"]
+        self.centerId = center["Items"][0]["id"]
         if not self.centerId:
            raise Exception("Center found, but no center ID found.")
         self.apiKey = apiKey
     def list_forms(self):
-        return self.db.forms.find({ "center": self.centerId }, {"name": 1, "_id": 1})
-    def performFormAgg(self, aggPipeline=[]):
-        """Performs aggregation only on forms which user has access to.
-        """
-        pipeline = [
-            {"$match": {"center": self.centerId, "_id": self.formId } }
-        ] + aggPipeline
-        return self.db.forms.aggregate(pipeline)
-    def get_form_responses(self, formId):
-        self.formId = ObjectId(formId)
-        return self.performFormAgg([
-        {"$lookup":
-            {
-                "from": "responses",
-                "localField": "_id",
-                "foreignField": "form",
-                "as": "responses"
-            }
-        }
-        ])
+        forms = self.forms.query(
+            KeyConditionExpression=Key('center').eq({"id": centerId })
+        )
+        return forms["Items"]
+    def get_form_responses(self, formId, formVersion):
+        form = self.forms.get_item(Key={"id": formId, "version": formVersion})["Item"]
+        if (form["centerId"] != self.centerId):
+            raise Exception("Your center does not have access to this form.")
+        responses = self.responses.query(
+            KeyConditionExpression=Key('formId').eq(formId)
+        )
+        return responses["Items"]
+    def edit_form(self, formId, formVersion):
+        form = self.forms.get_item(Key={"id": formId, "version": formVersion})["Item"]
+        if (form["centerId"] != self.centerId):
+            raise Exception("Your center does not have access to this form.")
+        responses = self.responses.query(
+            KeyConditionExpression=Key('form').eq({"id": formId, "version": formVersion })
+        )
+        return responses["Items"]

@@ -13,7 +13,7 @@ table {
     border: 1px dashed black;
 }
 table th {
-        text-transform: capitalize;
+    text-transform: capitalize;
 }
 table th, table td {
     padding: 5px;
