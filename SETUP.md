@@ -77,6 +77,28 @@ Email sending role: http://www.wisdomofjim.com/blog/sending-an-email-from-aws-la
     ]
 }
 ```
+7. DynamoDB
+Add the following policy (ccmt_cff_lambda_dynamodb):
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+         {
+            "Effect": "Allow",
+            "Action": [
+                "DynamoDB:*"
+            ],
+            "Resource": [
+                "arn:aws:dynamodb:us-east-1:131049698002:table/ccmt_cff_forms",
+                "arn:aws:dynamodb:us-east-1:131049698002:table/ccmt_cff_centers",
+                "arn:aws:dynamodb:us-east-1:131049698002:table/ccmt_cff_schemas",
+                "arn:aws:dynamodb:us-east-1:131049698002:table/ccmt_cff_schemaModifiers",
+                "arn:aws:dynamodb:us-east-1:131049698002:table/ccmt_cff_responses"
+            ]
+        }
+    ]
+}
+```
 
 apex deploy
 

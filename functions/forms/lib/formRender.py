@@ -1,35 +1,53 @@
-from .mongoConnection import MongoConnection
+from .dbConnection import DBConnection
 from bson import ObjectId
 import datetime
+# Ref:
+# https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GettingStarted.Python.03.html
 
-class FormRender(MongoConnection):
-    def render_form_by_id(self, formId):
+class FormRender(DBConnection):
+    def render_form_by_id(self, formId, formVersion):
         """Renders form with its schema and uiSchema resolved.
         """
-        return self.db.forms.aggregate([
-        {"$match": {"_id": ObjectId(formId)} },
-        {"$lookup":
-            {
-                "from": "schemas",
-                "localField": "schema",
-                "foreignField": "_id",
-                "as": "schemaRef"
-            }
-        },
-        {"$lookup":
-            {
-                "from": "schemaModifiers",
-                "localField": "schemaModifier",
-                "foreignField": "_id",
-                "as": "schemaModifierRef"
-            }
-        },
-        { "$project": { 
-                "name": 1,
-                "schema": { "$arrayElemAt": [ "$schemaRef", 0 ] },
-                "schemaModifier": { "$arrayElemAt": [ "$schemaModifierRef", 0 ] } 
-            }} 
-        ])
+        form = self.get_form(formId, formVersion)['Item']
+        form['schema'] = self.client.get_item(TableName='ccmt_cff_schemas', Key=form['schema']['M'])['Item']
+        form['schemaModifier'] = self.client.get_item(TableName='ccmt_cff_schemaModifiers', Key=form['schemaModifier']['M'])['Item']
+        return form
+    def get_form(self, id, version):
+        return self.get_item_by_id_and_version('ccmt_cff_forms', id, version)
+    def get_schema(self, id, version):
+        return self.get_item_by_id_and_version('ccmt_cff_schemas', id, version)
+    def get_schemaModifier(self, id, version):
+        return self.get_item_by_id_and_version('ccmt_cff_schemaModifiers', id, version)
+    def get_item_by_id_and_version(self, tableName, id, version):
+        return self.client.get_item(
+            TableName=tableName,
+            Key={
+                'id': {
+                    'S': str(id)
+                },
+                'version': {
+                    'N': str(version)
+                }
+            })
+    def update_form(self, id, version, schemaId, schemaModifierId):
+        return self.client.update_item(
+            TableName='ccmt_cff_forms',
+            Key={
+                'id': {
+                    'S': str(id)
+                },
+                'version': {
+                    'N': str(version)
+                }
+            },
+            UpdateExpression="set schema = :s, schemaModifier =:sm",
+            ExpressionAttributeValues={
+                ':s': {"M": schemaId},
+                ':sm': {"M": schemaModifierId}
+            },
+            ReturnValues="UPDATED_NEW"
+
+        )
     def submit_form(self, formId, response_data, modifyLink=""):
         formId = ObjectId(formId)
         form = self.db.forms.find_one({"_id": formId}, {"schema": 1, "schemaModifier": 1})
@@ -63,6 +81,7 @@ class FormRender(MongoConnection):
         },
         {
             "$set": {
-                "value": response_data
+                "value": response_data,
+                "date_last_modified": datetime.datetime.now()
             }
         })

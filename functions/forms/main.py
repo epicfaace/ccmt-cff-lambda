@@ -38,7 +38,7 @@ def parseQuery(qs, event):
     else:
         ctrl = FormRender()
         if qs["action"] == "formRender":
-            return ctrl.render_form_by_id(qs["id"])
+            return ctrl.render_form_by_id(qs["id"], qs["version"])
         if qs["action"] == "getResponseAndSchemas":
             return ctrl.render_response_and_schemas(qs["id"])
         elif qs["action"] == "formSubmit":

@@ -10,7 +10,7 @@ from pynliner import Pynliner
 
 ccmt_email_css = """
 table {
-    border: 1px solid black;
+    border: 1px dashed black;
 }
 table th {
         text-transform: capitalize;
@@ -20,6 +20,7 @@ table th, table td {
 }
 ul {
     list-style-type: none;
+    padding: 0;
 }
 """
 
