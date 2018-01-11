@@ -93,12 +93,14 @@ Add the following policy (ccmt_cff_lambda_dynamodb):
                 "arn:aws:dynamodb:us-east-1:131049698002:table/ccmt_cff_centers",
                 "arn:aws:dynamodb:us-east-1:131049698002:table/ccmt_cff_schemas",
                 "arn:aws:dynamodb:us-east-1:131049698002:table/ccmt_cff_schemaModifiers",
-                "arn:aws:dynamodb:us-east-1:131049698002:table/ccmt_cff_responses"
+                "arn:aws:dynamodb:us-east-1:131049698002:table/ccmt_cff_responses",
+                "arn:aws:dynamodb:us-east-1:131049698002:table/ccmt_cff_forms/index/center-index"
             ]
         }
     ]
 }
 ```
+Create secondary index on ccmt_cff_forms on column center
 
 apex deploy
 

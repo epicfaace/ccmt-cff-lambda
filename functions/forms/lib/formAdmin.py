@@ -4,18 +4,19 @@ from boto3.dynamodb.conditions import Key
 class FormAdmin(DBConnection):
     def __init__(self, apiKey):
         super(FormAdmin, self).__init__()
-        centers = self.centers.query(
-            KeyConditionExpression=Key('apiKey').eq(apiKey)
-        )
-        if not center or not center["Items"] or not len(center["Items"]):
+        center = self.centers.get_item(Key={"apiKey": apiKey})["Item"]
+        if not center:
            raise Exception("Incorrect API Key. No center found for the specified API key.")
-        self.centerId = center["Items"][0]["id"]
+        self.centerId = center["id"]
         if not self.centerId:
            raise Exception("Center found, but no center ID found.")
         self.apiKey = apiKey
     def list_forms(self):
         forms = self.forms.query(
-            KeyConditionExpression=Key('center').eq({"id": centerId })
+            IndexName='center-index',
+#            KeyConditionExpression=Key('center').eq(self.centerId)
+ KeyConditionExpression='center = :c',
+ ExpressionAttributeValues={ ':c': self.centerId} 
         )
         return forms["Items"]
     def get_form_responses(self, formId, formVersion):
