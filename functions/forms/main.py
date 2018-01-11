@@ -1,10 +1,17 @@
-from bson import json_util
 import json
 from bson.objectid import ObjectId
 from lib.formRender import FormRender
 from lib.formAdmin import FormAdmin
 from lib.ipnHandler import IpnHandler
 import traceback
+import decimal
+
+
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, decimal.Decimal):
+            return float(o)
+        return super(DecimalEncoder, self).default(o)
 
 def make_response(body, statuscode):
     return {
@@ -12,7 +19,7 @@ def make_response(body, statuscode):
         "headers": {
             'Access-Control-Allow-Origin': '*'
         },
-        "body": json_util.dumps(body),
+        "body": json.dumps(body, cls=DecimalEncoder),
         "isBase64Encoded": False
     }
 def get_schema(schemaId, version):
@@ -42,7 +49,7 @@ def parseQuery(qs, event):
         if qs["action"] == "getResponseAndSchemas":
             return ctrl.render_response_and_schemas(qs["id"])
         elif qs["action"] == "formSubmit":
-            return ctrl.submit_form(qs["id"], json.loads(event["body"]), qs.get("modifyLink", ""))
+            return ctrl.submit_form(qs["formId"], qs["formVersion"], json.loads(event["body"]), qs.get("modifyLink", ""))
         elif qs["action"] == "formResponseEdit":
             return ctrl.edit_response_form(qs["id"], json.loads(event["body"]))
         else:
