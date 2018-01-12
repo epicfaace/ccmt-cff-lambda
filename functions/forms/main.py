@@ -39,13 +39,13 @@ def parseQuery(qs, event):
         if qs["action"] == "formList":
             return ctrl.list_forms()
         elif qs["action"] == "formResponses":
-            return ctrl.get_form_responses(qs["id"], int(qs["version"]))
+            return ctrl.get_form_responses(qs["id"], qs["version"])
         else:
             raise Exception("Action not found.")
     else:
         ctrl = FormRender()
         if qs["action"] == "formRender":
-            return ctrl.render_form_by_id(qs["id"], int(qs["version"]))
+            return ctrl.render_form_by_id(qs["id"], qs["version"])
         if qs["action"] == "getResponseAndSchemas":
             return ctrl.render_response_and_schemas(qs["formId"], qs["responseId"])
         elif qs["action"] == "formSubmit":

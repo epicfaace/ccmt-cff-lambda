@@ -14,24 +14,18 @@ class FormAdmin(DBConnection):
     def list_forms(self):
         forms = self.forms.query(
             IndexName='center-index',
-#            KeyConditionExpression=Key('center').eq(self.centerId)
- KeyConditionExpression='center = :c',
- ExpressionAttributeValues={ ':c': self.centerId} 
+#           KeyConditionExpression=Key('center').eq(self.centerId)
+            KeyConditionExpression='center = :c',
+            ExpressionAttributeValues={ ':c': self.centerId} 
         )
         return forms["Items"]
     def get_form_responses(self, formId, formVersion):
-        form = self.forms.get_item(Key={"id": formId, "version": formVersion})["Item"]
-        if (form["centerId"] != self.centerId):
+        form = self.forms.get_item(Key={"id": formId, "version": int(formVersion)})["Item"]
+        if (form["center"] != self.centerId):
             raise Exception("Your center does not have access to this form.")
         responses = self.responses.query(
             KeyConditionExpression=Key('formId').eq(formId)
         )
         return responses["Items"]
     def edit_form(self, formId, formVersion):
-        form = self.forms.get_item(Key={"id": formId, "version": formVersion})["Item"]
-        if (form["centerId"] != self.centerId):
-            raise Exception("Your center does not have access to this form.")
-        responses = self.responses.query(
-            KeyConditionExpression=Key('form').eq({"id": formId, "version": formVersion })
-        )
-        return responses["Items"]
+        pass
