@@ -85,24 +85,26 @@ class IpnHandler(DBConnection):
                 'formId': formId,
                 'responseId': responseId
             },
-            UpdateExpression="""
-                set IPN_TOTAL_AMOUNT = IPN_TOTAL_AMOUNT + :amt,
-                set IPN_HISTORY = list.append(IPN_HISTORY, :ipnValue),
-                set IPN_STATUS = :status,
-                set PAID = :paid
-            """,
+            UpdateExpression=("ADD IPN_TOTAL_AMOUNT :amt"
+                " SET IPN_HISTORY = list_append(if_not_exists(IPN_HISTORY, :empty_list), :ipnValue),"
+                " IPN_STATUS = :status,"
+                " PAID = :paid"),
             ExpressionAttributeValues={
                 ':amt': Decimal(paramDict["mc_gross"]),
-                ':ipnValue': {
+                ':ipnValue': [{
                             "date": datetime.datetime.now().isoformat(),
                             "value": paramDict
-                        },
+                        }],
+                ':empty_list': [],
                 ":status": paramDict["payment_status"],
                 ":paid": paramDict["payment_status"] == "Completed"
             },
             ReturnValues="ALL_NEW"
-            )
-            return response
+            )["Attributes"]
+            #emailer = Emailer()
+            #emailer.send_email(toEmail="aramaswamis@gmail.com",
+            #                        fromEmail="webmaster@chinmayamission.com",
+            #                        msgBody=json.dumps(response))
             #response = mongoConnection.db.responses.find_one({
             #    "_id": responseId
             #}, {"value": 1, "confirmationEmailInfo": 1, "paymentInfo": 1, "modifyLink": 1})
@@ -127,19 +129,19 @@ class IpnHandler(DBConnection):
                 'formId': formId,
                 'responseId': responseId
             },
-            UpdateExpression="""
-                set IPN_HISTORY = list.append(IPN_HISTORY, :ipnValue),
-                set IPN_STATUS = :status,
-                set PAID = :paid""",
+            UpdateExpression=("set IPN_HISTORY = list_append(if_not_exists(IPN_HISTORY, :empty_list), :ipnValue),"
+                " IPN_STATUS = :status,"
+                " PAID = :paid,"),
             ExpressionAttributeValues={
-                ':ipnValue': {
+                ':ipnValue': [{
                         "date": datetime.datetime.now().isoformat(),
                         "value": paramDict or params
-                    },
+                    }],
+                ':empty_list': [],
                 ':status': "INVALID",
                 ":paid": False
             }
-            )["Item"]
+            )
             """mongoConnection.db.ipn.insert_one({
                 "date_created": datetime.datetime.now().isoformat(),
                 "success": False,
