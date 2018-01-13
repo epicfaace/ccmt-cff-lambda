@@ -1,6 +1,8 @@
 from .dbConnection import DBConnection
+from .util import calculate_price
 import datetime
 import uuid
+from decimal import Decimal
 # Ref:
 # https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GettingStarted.Python.03.html
 
@@ -41,6 +43,8 @@ class FormRender(DBConnection):
         form = self.get_form(formId, formVersion)
         schemaModifier = self.schemaModifiers.get_item(Key=form['schemaModifier'])['Item']
         resId = str(uuid.uuid4())
+        paymentInfo = schemaModifier['paymentInfo']
+        paymentInfo['total'] = Decimal(calculate_price(paymentInfo['total'], response_data))
         self.responses.put_item(
             Item={
             "formId": formId, # partition key
@@ -53,10 +57,10 @@ class FormRender(DBConnection):
                     'id': formId,
                     'version': formVersion
             }, # id, version.
-            "paymentInfo": schemaModifier['paymentInfo'],
+            "paymentInfo": paymentInfo,
             "confirmationEmailInfo": schemaModifier['confirmationEmailInfo']
         })
-        return {"success": True, "inserted_id": resId }
+        return {"success": True, "inserted_id": resId, "paymentInfo": paymentInfo }
     def render_response_and_schemas(self, formId, responseId):
         """Renders response, plus schema and schemaModifier for that particular response.
         Used for editing responses."""

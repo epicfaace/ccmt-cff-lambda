@@ -3,3 +3,4 @@ bleach==2.1.2
 html2text==2017.10.4
 json2html==1.2.1
 pynliner==0.8.0
+py_expression_eval==0.3.4
