@@ -26,7 +26,7 @@ class FormRender(DBConnection):
     def get_schemaModifier(self, id, version):
         return self.schemaModifiers.get_item(Key={"id": id, "version": int(version)})["Item"]
     def update_form(self, id, version, schemaId, schemaModifierId):
-        # Not used.
+        # Not used (yet).
         return self.forms.update_item(
             Key={
                 'id': str(id),
