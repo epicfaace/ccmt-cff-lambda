@@ -13,6 +13,10 @@ class FormRender(DBConnection):
         form = self.get_form(formId, formVersion)
         self.set_form_schemas(form)
         return form
+    def get_response(self, formId, responseId):
+        """Renders response; used when editing a form."""
+        response = self.responses.get_item(Key={"formId": formId, "responseId": responseId})["Item"]
+        return response
     def set_form_schemas(self, form):
         """Renders form with its schema and uiSchema resolved.
         """
@@ -61,17 +65,6 @@ class FormRender(DBConnection):
             "confirmationEmailInfo": schemaModifier['confirmationEmailInfo']
         })
         return {"success": True, "inserted_id": resId, "paymentInfo": paymentInfo }
-    def render_response_and_schemas(self, formId, responseId):
-        """Renders response, plus schema and schemaModifier for that particular response.
-        Used for editing responses."""
-        response = self.responses.get_item(Key={"formId": formId, "responseId": responseId})["Item"]
-        form = self.forms.get_item(Key={"id": formId})["Item"]
-        self.set_form_schemas(form)
-        return [{
-            "formData": response,
-            "schema": form['schema'],
-            "schemaModifier": form['schemaModifier']
-        }]
     def edit_response_form(self, formId, formVersion, responseId, response_data):
         """self.db.responses.update_one({
             "_id": responseId

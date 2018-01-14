@@ -45,9 +45,10 @@ def parseQuery(qs, event):
     else:
         ctrl = FormRender()
         if qs["action"] == "formRender":
-            return ctrl.render_form_by_id(qs["id"], qs["version"])
-        if qs["action"] == "getResponseAndSchemas":
-            return ctrl.render_response_and_schemas(qs["formId"], qs["responseId"])
+            form = ctrl.render_form_by_id(qs["id"], qs["version"])
+            if "resid" in qs:
+                form["responseLoaded"] = ctrl.get_response(qs["id"], qs["resid"])
+            return form
         elif qs["action"] == "formSubmit":
             return ctrl.submit_form(qs["formId"], qs["formVersion"], json.loads(event["body"]), qs.get("modifyLink", ""))
         elif qs["action"] == "formResponseEdit":

@@ -118,11 +118,13 @@ class IpnHandler(DBConnection):
             if "confirmationEmailInfo" in response and response["confirmationEmailInfo"]:
                 toField = response["confirmationEmailInfo"]["toField"]
                 msgBody = response["confirmationEmailInfo"].get("message", "")
+                if "image" in response["confirmationEmailInfo"]:
+                    msgBody += "<img style='max-width: 100%;' src='{}' />".format(response["confirmationEmailInfo"]["image"])
                 if response["confirmationEmailInfo"]["showResponse"]:
                     msgBody += "<br><br>" + dict_to_table(response["value"])
                 msgBody += "<br><br> Total Amount: {}".format(format_payment(response["paymentInfo"]["currency"], response["paymentInfo"]["total"]))
                 if response["confirmationEmailInfo"]["showModifyLink"] and "modifyLink" in response:
-                    msgBody += "<br><br>Modify your response by going to this link: {}#formid={}&resid={}".format(response["modifyLink"], str(formId), str(responseId))
+                    msgBody += "<br><br>Modify your response by going to this link: {}#resid={}".format(response["modifyLink"], str(responseId))
                 # todo: check amounts and Completed status, and then send.
                 emailer = Emailer()
                 emailer.send_email(toEmail=response["value"][toField],
