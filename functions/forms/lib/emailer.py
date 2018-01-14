@@ -22,6 +22,11 @@ ul {
     list-style-type: none;
     padding: 0;
 }
+img.mainImage {
+    max-width: 200px;
+    float: right;
+    margin: 20px;
+}
 """
 
 class Emailer():

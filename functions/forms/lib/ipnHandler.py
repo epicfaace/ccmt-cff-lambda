@@ -117,9 +117,10 @@ class IpnHandler(DBConnection):
             
             if "confirmationEmailInfo" in response and response["confirmationEmailInfo"]:
                 toField = response["confirmationEmailInfo"]["toField"]
-                msgBody = response["confirmationEmailInfo"].get("message", "")
+                msgBody = "<h1>{}</h1>".format(response["confirmationEmailInfo"].get("subject", "") or response["confirmationEmailInfo"].get("header", "") or "Confirmation Email")
                 if "image" in response["confirmationEmailInfo"]:
-                    msgBody += "<img style='max-width: 100%;' src='{}' />".format(response["confirmationEmailInfo"]["image"])
+                    msgBody += "<img class='mainImage' src='{}' />".format(response["confirmationEmailInfo"]["image"])
+                msgBody += response["confirmationEmailInfo"].get("message", "")
                 if response["confirmationEmailInfo"]["showResponse"]:
                     msgBody += "<br><br>" + dict_to_table(response["value"])
                 msgBody += "<br><br> Total Amount: {}".format(format_payment(response["paymentInfo"]["currency"], response["paymentInfo"]["total"]))
