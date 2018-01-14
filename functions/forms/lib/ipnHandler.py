@@ -2,12 +2,11 @@ import sys
 import urllib.parse
 import requests
 import datetime
-from .emailer import Emailer
+from .emailer import send_confirmation_email, send_partial_payment_email
 import json
 from json2html import json2html
 from .dbConnection import DBConnection
 from decimal import Decimal
-from .util import format_payment, dict_to_table
 
 """
 action=ipn&cmd=_notify-validate&mc_gross=19.95&protection_eligibility=Eligible&address_status=confirmed&payer_id=LPLWNMTBWMFAY&tax=0.00&address_street=1+Main+St&payment_date=20%3A12%3A59+Jan+13%2C+2009+PST&payment_status=Completed&charset=windows-1252&address_zip=95131&first_name=Test&mc_fee=0.88&address_country_code=US&address_name=Test+User&notify_version=2.6&custom=&payer_status=verified&address_country=United+States&address_city=San+Jose&quantity=1&verify_sign=AtkOfCXbDm2hu0ZELryHFjY-Vb7PAUvS6nMXgysbElEn9v-1XcmSoGtf&payer_email=gpmac_1231902590_per%40paypal.com&txn_id=61E67681CH3238416&payment_type=instant&last_name=User&address_state=CA&receiver_email=gpmac_1231902686_biz%40paypal.com&payment_fee=0.88&receiver_id=S8XGHLYDW9T3S&txn_type=express_checkout&item_name=&mc_currency=USD&item_number=&residence_country=US&test_ipn=1&handling_amount=0.00&transaction_subject=&payment_gross=19.95&shipping=0.00
@@ -102,38 +101,51 @@ class IpnHandler(DBConnection):
             },
             ReturnValues="ALL_NEW"
             )["Attributes"]
-            
-            response = self.responses.update_item(
-            Key={
-                'formId': formId,
-                'responseId': responseId
-            },
-            UpdateExpression=("SET PAID = :paid"),
-            ExpressionAttributeValues={
-                ":paid": paramDict["payment_status"] == "Completed" and response["IPN_TOTAL_AMOUNT"] == response["paymentInfo"]["total"]
-            },
-            ReturnValues="ALL_NEW"
-            )["Attributes"]
-            
-            if "confirmationEmailInfo" in response and response["confirmationEmailInfo"]:
-                toField = response["confirmationEmailInfo"]["toField"]
-                msgBody = "<h1>{}</h1>".format(response["confirmationEmailInfo"].get("subject", "") or response["confirmationEmailInfo"].get("header", "") or "Confirmation Email")
-                if "image" in response["confirmationEmailInfo"]:
-                    msgBody += "<img class='mainImage' src='{}' />".format(response["confirmationEmailInfo"]["image"])
-                msgBody += response["confirmationEmailInfo"].get("message", "")
-                if response["confirmationEmailInfo"]["showResponse"]:
-                    msgBody += "<br><br>" + dict_to_table(response["value"])
-                msgBody += "<br><br> Total Amount: {}".format(format_payment(response["paymentInfo"]["currency"], response["paymentInfo"]["total"]))
-                if response["confirmationEmailInfo"]["showModifyLink"] and "modifyLink" in response:
-                    msgBody += "<br><br>Modify your response by going to this link: {}#resid={}".format(response["modifyLink"], str(responseId))
-                # todo: check amounts and Completed status, and then send.
-                emailer = Emailer()
-                emailer.send_email(toEmail=response["value"][toField],
-                                    fromEmail=response["confirmationEmailInfo"].get("from", "webmaster@chinmayamission.com"),
-                                    fromName=response["confirmationEmailInfo"].get("fromName", "Webmaster"),
-                                    subject=response["confirmationEmailInfo"].get("subject", "Confirmation Email"),
-                                    msgBody=msgBody)
-            return params
+            if paramDict["payment_status"] == "Completed":
+                fullyPaid = response["IPN_TOTAL_AMOUNT"] == response["paymentInfo"]["total"]
+
+                if fullyPaid and "PENDING_UPDATE" in response:
+                    # replace response value with pending update.
+                    payment_info_old = response["PENDING_UPDATE"].get("paymentInfo", None)
+                    response = self.responses.update_item(
+                        Key={
+                            'formId': formId,
+                            'responseId': responseId
+                        },
+                        UpdateExpression=("REMOVE PENDING_UPDATE,"
+                        " SET UPDATE_HISTORY = list_append(if_not_exists(UPDATE_HISTORY, :empty_list), :updateHistory),"
+                        " value = :value,"
+                        " modifyLink = :modifyLink,"
+                        " paid = :paid,"
+                        " paymentInfo = :paymentInfo"),
+                        ExpressionAttributeValues={
+                            ':updateHistory': [{
+                                "date": datetime.datetime.now().isoformat(),
+                                "action": "verify_update"
+                            }],
+                            ":paid": fullyPaid,
+                            ":value": response["PENDING_UPDATE"].get("value", None),
+                            ":modifyLink": response["PENDING_UPDATE"].get("modifyLink", None),
+                            ":paymentInfo": payment_info_old                            
+                        },
+                        ReturnValues="ALL_NEW")["Attributes"]
+                    # send_partial_payment_email(payment_info_old, response["paymentInfo"], response)
+                else:
+                    # update it as paid or not.
+                    response = self.responses.update_item(
+                        Key={
+                            'formId': formId,
+                            'responseId': responseId
+                        },
+                        UpdateExpression=("SET PAID = :paid"),
+                        ExpressionAttributeValues={
+                            ":paid": fullyPaid
+                        },
+                        ReturnValues="ALL_NEW"
+                        )["Attributes"]
+                    send_confirmation_email(response)
+                return params
+            return "payment not completed"
         elif r.text == 'INVALID':
             response = self.responses.update_item(
             Key={
@@ -141,16 +153,16 @@ class IpnHandler(DBConnection):
                 'responseId': responseId
             },
             UpdateExpression=("set IPN_HISTORY = list_append(if_not_exists(IPN_HISTORY, :empty_list), :ipnValue),"
-                " IPN_STATUS = :status,"
-                " PAID = :paid,"),
+                " IPN_STATUS = :status,"),
+                #" PAID = :paid,"),
             ExpressionAttributeValues={
                 ':ipnValue': [{
                         "date": datetime.datetime.now().isoformat(),
                         "value": paramDict or params
                     }],
                 ':empty_list': [],
-                ':status': "INVALID",
-                ":paid": False
+                ':status': "INVALID"#,
+                #":paid": False
             }
             )
             """mongoConnection.db.ipn.insert_one({

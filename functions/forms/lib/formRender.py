@@ -43,28 +43,63 @@ class FormRender(DBConnection):
             },
             ReturnValues="UPDATED_NEW"
         )
-    def submit_form(self, formId, formVersion, response_data, modifyLink=""):
+    def submit_form(self, formId, formVersion, response_data, modifyLink, responseId):
         form = self.get_form(formId, formVersion)
         schemaModifier = self.schemaModifiers.get_item(Key=form['schemaModifier'])['Item']
-        resId = str(uuid.uuid4())
         paymentInfo = schemaModifier['paymentInfo']
         paymentInfo['total'] = Decimal(calculate_price(paymentInfo['total'], response_data))
-        self.responses.put_item(
-            Item={
-            "formId": formId, # partition key
-            "responseId": resId, # sort key
-            "modifyLink": modifyLink,
-            "value": response_data,
-            "date_last_modified": datetime.datetime.now().isoformat(),
-            "date_created": datetime.datetime.now().isoformat(),
-            "form": {
-                    'id': formId,
-                    'version': formVersion
-            }, # id, version.
-            "paymentInfo": paymentInfo,
-            "confirmationEmailInfo": schemaModifier['confirmationEmailInfo']
-        })
-        return {"success": True, "inserted_id": resId, "paymentInfo": paymentInfo }
+        if not responseId:
+            responseId = str(uuid.uuid4())
+            self.responses.put_item(
+                Item={
+                    "formId": formId, # partition key
+                    "responseId": responseId, # sort key
+                    "modifyLink": modifyLink,
+                    "value": response_data,
+                    "date_last_modified": datetime.datetime.now().isoformat(),
+                    "date_created": datetime.datetime.now().isoformat(),
+                    "form": {
+                            'id': formId,
+                            'version': formVersion
+                    }, # id, version.
+                    "paymentInfo": paymentInfo,
+                    "confirmationEmailInfo": schemaModifier['confirmationEmailInfo'],
+                    "paid": False
+            })
+            return {"success": True, "action": "insert", "id": responseId, "paymentInfo": paymentInfo }
+        else:
+            response_old = self.responses.update_item(
+                Key={
+                    'formId': formId,
+                    'responseId': responseId
+                },
+                UpdateExpression=("SET"
+                    " UPDATE_HISTORY = list_append(if_not_exists(UPDATE_HISTORY, :empty_list), :updateHistory),"
+                    " PENDING_UPDATE = :pendingUpdate,"
+                    " date_last_modified = :now"),
+                ExpressionAttributeValues={
+                    ':updateHistory': [{
+                        "date": datetime.datetime.now().isoformat(),
+                        "action": "pending_update"
+                    }],
+                    ":pendingUpdate": {
+                        ":value": response_data,
+                        ":modifyLink": modifyLink,
+                        ":paymentInfo": paymentInfo
+                    },
+                    ':empty_list': [],
+                    ":now": datetime.datetime.now().isoformat()
+                },
+                ReturnValues="ALL_OLD"
+                )["Attributes"]
+            return {
+                "success": True,
+                "action": "update",
+                "id": responseId,
+                "paymentInfo": paymentInfo,
+                "paymentInfo_received": response_old.get("IPN_TOTAL_AMOUNT", 0),
+                "paymentInfo_old": response_old["paymentInfo"]
+            }
     def edit_response_form(self, formId, formVersion, responseId, response_data):
         """self.db.responses.update_one({
             "_id": responseId
