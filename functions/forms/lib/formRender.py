@@ -97,7 +97,7 @@ class FormRender(DBConnection):
                 "action": "update",
                 "id": responseId,
                 "paymentInfo": paymentInfo,
-                "paymentInfo_received": response_old.get("IPN_TOTAL_AMOUNT", 0),
+                "total_amt_received": response_old.get("IPN_TOTAL_AMOUNT", 0), # todo: encode currency into here as well.
                 "paymentInfo_old": response_old["paymentInfo"]
             }
     def edit_response_form(self, formId, formVersion, responseId, response_data):
