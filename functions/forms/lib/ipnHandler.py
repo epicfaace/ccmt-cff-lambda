@@ -3,6 +3,7 @@ import urllib.parse
 import requests
 import datetime
 from .emailer import send_confirmation_email, send_partial_payment_email
+from .responseHandler import response_verify_update
 import json
 from json2html import json2html
 from .dbConnection import DBConnection
@@ -102,34 +103,11 @@ class IpnHandler(DBConnection):
             ReturnValues="ALL_NEW"
             )["Attributes"]
             if paramDict["payment_status"] == "Completed":
-                fullyPaid = response["IPN_TOTAL_AMOUNT"] == response["paymentInfo"]["total"]
+                fullyPaid = response["IPN_TOTAL_AMOUNT"] >= response["paymentInfo"]["total"]
 
                 if fullyPaid and "PENDING_UPDATE" in response:
-                    # replace response value with pending update.
-                    payment_info_old = response["PENDING_UPDATE"].get("paymentInfo", None)
-                    response = self.responses.update_item(
-                        Key={
-                            'formId': formId,
-                            'responseId': responseId
-                        },
-                        UpdateExpression=("REMOVE PENDING_UPDATE,"
-                        " SET UPDATE_HISTORY = list_append(if_not_exists(UPDATE_HISTORY, :empty_list), :updateHistory),"
-                        " value = :value,"
-                        " modifyLink = :modifyLink,"
-                        " paid = :paid,"
-                        " paymentInfo = :paymentInfo"),
-                        ExpressionAttributeValues={
-                            ':updateHistory': [{
-                                "date": datetime.datetime.now().isoformat(),
-                                "action": "verify_update"
-                            }],
-                            ":paid": fullyPaid,
-                            ":value": response["PENDING_UPDATE"].get("value", None),
-                            ":modifyLink": response["PENDING_UPDATE"].get("modifyLink", None),
-                            ":paymentInfo": payment_info_old                            
-                        },
-                        ReturnValues="ALL_NEW")["Attributes"]
-                    # send_partial_payment_email(payment_info_old, response["paymentInfo"], response)
+                    # Updates value from saved pending update value and sends email.
+                    response_verify_update(response, self.responses)
                 else:
                     # update it as paid or not.
                     response = self.responses.update_item(
@@ -144,6 +122,7 @@ class IpnHandler(DBConnection):
                         ReturnValues="ALL_NEW"
                         )["Attributes"]
                     send_confirmation_email(response)
+                
                 return params
             return "payment not completed"
         elif r.text == 'INVALID':
@@ -153,7 +132,7 @@ class IpnHandler(DBConnection):
                 'responseId': responseId
             },
             UpdateExpression=("set IPN_HISTORY = list_append(if_not_exists(IPN_HISTORY, :empty_list), :ipnValue),"
-                " IPN_STATUS = :status,"),
+                " IPN_STATUS = :status"),
                 #" PAID = :paid,"),
             ExpressionAttributeValues={
                 ':ipnValue': [{

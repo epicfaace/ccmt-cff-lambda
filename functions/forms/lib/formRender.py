@@ -1,5 +1,6 @@
 from .dbConnection import DBConnection
 from .util import calculate_price
+from .responseHandler import response_verify_update
 import datetime
 import uuid
 from decimal import Decimal
@@ -90,8 +91,11 @@ class FormRender(DBConnection):
                     ':empty_list': [],
                     ":now": datetime.datetime.now().isoformat()
                 },
+                # todo: if not updated, do this ...
                 ReturnValues="ALL_OLD"
                 )["Attributes"]
+            if response_old["PAID"] and response_old["paymentInfo"]["total"] == response["paymentInfo"]["total"]:
+                response_verify_update(response, self.responses)
             return {
                 "success": True,
                 "action": "update",
@@ -100,14 +104,3 @@ class FormRender(DBConnection):
                 "total_amt_received": response_old.get("IPN_TOTAL_AMOUNT", 0), # todo: encode currency into here as well.
                 "paymentInfo_old": response_old["paymentInfo"]
             }
-    def edit_response_form(self, formId, formVersion, responseId, response_data):
-        """self.db.responses.update_one({
-            "_id": responseId
-        },
-        {
-            "$set": {
-                "value": response_data,
-                "date_last_modified": datetime.datetime.now()
-            }
-        })"""
-        pass
