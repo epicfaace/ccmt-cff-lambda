@@ -69,15 +69,12 @@ class FormRender(DBConnection):
             })
             return {"success": True, "action": "insert", "id": responseId, "paymentInfo": paymentInfo }
         else:
-            key = { 'formId': formId, 'responseId': responseId }
-            response_old = self.responses.get_item(Key=key)["Item"]
-            response = self.responses.update_item(
-                Key=key,
+            response_old = self.responses.update_item(
+                Key={ 'formId': formId, 'responseId': responseId },
                 UpdateExpression=("SET"
                     " UPDATE_HISTORY = list_append(if_not_exists(UPDATE_HISTORY, :empty_list), :updateHistory),"
                     " PENDING_UPDATE = :pendingUpdate,"
-                    " date_last_modified = :now,"
-                    " PAID = :paid"),
+                    " date_last_modified = :now"),
                 ExpressionAttributeValues={
                     ':updateHistory': [{
                         "date": datetime.datetime.now().isoformat(),
@@ -89,13 +86,12 @@ class FormRender(DBConnection):
                         "paymentInfo": paymentInfo
                     },
                     ':empty_list': [],
-                    ":now": datetime.datetime.now().isoformat(),
-                    ":paid": False
+                    ":now": datetime.datetime.now().isoformat()
                 },
                 # todo: if not updated, do this ...
-                ReturnValues="ALL_NEW"
+                ReturnValues="ALL_OLD"
                 )["Attributes"]
-            if response_old.get("PAID", None) == True and response["paymentInfo"]["total"] >= response_old["paymentInfo"]["total"]:
+            if response_old.get("PAID", None) == True and paymentInfo["total"] >= response_old["PENDING_UPDATE"]["paymentInfo"]["total"]:
                 response_verify_update(response, self.responses)
             return {
                 "success": True,
