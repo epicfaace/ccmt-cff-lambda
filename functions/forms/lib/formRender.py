@@ -65,7 +65,7 @@ class FormRender(DBConnection):
                     }, # id, version.
                     "paymentInfo": paymentInfo,
                     "confirmationEmailInfo": schemaModifier['confirmationEmailInfo'],
-                    "paid": False
+                    "PAID": False
             })
             return {"success": True, "action": "insert", "id": responseId, "paymentInfo": paymentInfo }
         else:
@@ -76,7 +76,8 @@ class FormRender(DBConnection):
                 UpdateExpression=("SET"
                     " UPDATE_HISTORY = list_append(if_not_exists(UPDATE_HISTORY, :empty_list), :updateHistory),"
                     " PENDING_UPDATE = :pendingUpdate,"
-                    " date_last_modified = :now"),
+                    " date_last_modified = :now,"
+                    " PAID = :paid"),
                 ExpressionAttributeValues={
                     ':updateHistory': [{
                         "date": datetime.datetime.now().isoformat(),
@@ -88,12 +89,13 @@ class FormRender(DBConnection):
                         "paymentInfo": paymentInfo
                     },
                     ':empty_list': [],
-                    ":now": datetime.datetime.now().isoformat()
+                    ":now": datetime.datetime.now().isoformat(),
+                    ":paid": False
                 },
                 # todo: if not updated, do this ...
                 ReturnValues="ALL_NEW"
                 )["Attributes"]
-            if response_old.get("PAID", None) and response_old["paymentInfo"]["total"] == response["paymentInfo"]["total"]:
+            if response_old.get("PAID", None) == True and response["paymentInfo"]["total"] >= response_old["paymentInfo"]["total"]:
                 response_verify_update(response, self.responses)
             return {
                 "success": True,
