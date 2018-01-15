@@ -31,7 +31,7 @@ def format_payment(currency, total):
         return "${}".format(total)
     return "{} {}".format(currency, total)
 def format_paymentInfo(paymentInfo):
-    return format_payment(paymentInfo["currency"], paymentInfo["total"])
+    return format_payment(paymentInfo.get("currency", ""), paymentInfo.get("total", "N/A"))
 
 def human_readable_key(key, delimiter=":"):
     delimiter = re.escape(delimiter)
