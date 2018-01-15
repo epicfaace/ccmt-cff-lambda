@@ -39,7 +39,7 @@ def send_confirmation_email(response):
         msgBody += response["confirmationEmailInfo"].get("message", "")
         if response["confirmationEmailInfo"]["showResponse"]:
             msgBody += "<br><br>" + dict_to_table(response["value"])
-        msgBody += "<br><br><h2> Total Amount: {}</h2>".format(format_paymentInfo(response["paymentInfo"]))
+        msgBody += "<br><br><h2>Total Amount: {0}</h2><br><h2>Amount Received: {0}</h2>".format(format_paymentInfo(response["paymentInfo"]))
         if response["confirmationEmailInfo"]["showModifyLink"] and "modifyLink" in response:
             msgBody += "<br><br>Modify your response by going to this link: {}#responseId={}".format(response["modifyLink"], str(response["responseId"]))
         # todo: check amounts and Completed status, and then send.
