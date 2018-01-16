@@ -18,7 +18,8 @@ def response_verify_update(response, responsesCollection):
         ExpressionAttributeValues={
             ':updateHistory': [{
                 "date": datetime.datetime.now().isoformat(),
-                "action": "verify_update"
+                "action": "updated",
+                "UPDATE_VALUE": response["PENDING_UPDATE"]
             }],
             ":paid": True, # fullyPaid is true.
             ":value": response["PENDING_UPDATE"].get("value", None),

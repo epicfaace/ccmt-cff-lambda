@@ -27,12 +27,12 @@ def calculate_price(expressionString, data):
         context[variable] = value
     return expr.evaluate(context)
 
-def format_payment(currency, total):
+def format_payment(total, currency='USD'):
     if currency == "USD":
         return "${}".format(total)
     return "{} {}".format(currency, total)
 def format_paymentInfo(paymentInfo):
-    return format_payment(paymentInfo.get("currency", ""), paymentInfo.get("total", "N/A"))
+    return format_payment(paymentInfo.get("total", "N/A"), paymentInfo.get("currency", "USD"))
 
 def human_readable_key(key, delimiter=":"):
     delimiter = re.escape(delimiter)

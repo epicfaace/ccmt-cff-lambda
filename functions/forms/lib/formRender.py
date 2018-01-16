@@ -75,7 +75,8 @@ class FormRender(DBConnection):
             })
             return {"success": True, "action": "insert", "id": responseId, "paymentInfo": paymentInfo }
         else:
-            response_old = self.responses.update_item(
+            response_old = self.responses.get_item(Key={ 'formId': formId, 'responseId': responseId })["Item"]
+            response_new = self.responses.update_item(
                 Key={ 'formId': formId, 'responseId': responseId },
                 UpdateExpression=("SET"
                     " UPDATE_HISTORY = list_append(if_not_exists(UPDATE_HISTORY, :empty_list), :updateHistory),"
@@ -95,10 +96,10 @@ class FormRender(DBConnection):
                     ":now": datetime.datetime.now().isoformat()
                 },
                 # todo: if not updated, do this ...
-                ReturnValues="ALL_OLD"
+                ReturnValues="ALL_NEW"
                 )["Attributes"]
-            if response_old.get("PAID", None) == True and paymentInfo["total"] >= response_old["PENDING_UPDATE"]["paymentInfo"]["total"]:
-                response_verify_update(response, self.responses)
+            if response_old.get("PAID", None) == True and paymentInfo["total"] <= response_old["paymentInfo"]["total"]:
+                response_verify_update(response_new, self.responses)
             return {
                 "success": True,
                 "action": "update",

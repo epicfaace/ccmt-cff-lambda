@@ -7,7 +7,7 @@ from email.mime.application import MIMEApplication
 # import bleach
 import html2text
 from pynliner import Pynliner
-from .util import format_paymentInfo, dict_to_table
+from .util import format_paymentInfo, format_payment, dict_to_table
 
 ccmt_email_css = """
 table {
@@ -39,6 +39,19 @@ def send_confirmation_email(response):
         msgBody += response["confirmationEmailInfo"].get("message", "")
         if response["confirmationEmailInfo"]["showResponse"]:
             msgBody += "<br><br>" + dict_to_table(response["value"])
+        
+        if 'items' in response['paymentInfo'] and len(response['paymentInfo']['items']) > 0:
+            msgBody += "<br><br><table class=paymentInfoTable>"
+            msgBody += "<tr><th>Name</th><th>Description</th><th>Amount</th><th>Quantity</th></tr><tr>"
+            for paymentInfoItem in response['paymentInfo']['items']:
+                msgBody += "<td>{}</td><td>{}</td><td>{}</td><td>{}</td>".format(
+                    paymentInfoItem.get('name',''),
+                    paymentInfoItem.get('description',''),
+                    format_payment(paymentInfoItem.get('amount',''), 'USD'),
+                    paymentInfoItem.get('quantity','')
+                )
+            msgBody += "</tr></table>"
+        
         msgBody += "<br><br><h2>Total Amount: {0}</h2><br><h2>Amount Received: {0}</h2>".format(format_paymentInfo(response["paymentInfo"]))
         if response["confirmationEmailInfo"]["showModifyLink"] and "modifyLink" in response:
             msgBody += "<br><br>Modify your response by going to this link: {}#responseId={}".format(response["modifyLink"], str(response["responseId"]))

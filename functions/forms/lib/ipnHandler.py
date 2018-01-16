@@ -86,18 +86,18 @@ class IpnHandler(DBConnection):
                 'formId': formId,
                 'responseId': responseId
             },
-            UpdateExpression=("SET IPN_TOTAL_AMOUNT = if_not_exists(IPN_TOTAL_AMOUNT, :zero) + :amt,"
-                " IPN_HISTORY = list_append(if_not_exists(IPN_HISTORY, :empty_list), :ipnValue),"
+            UpdateExpression=("ADD IPN_TOTAL_AMOUNT :amt"
+                " SET IPN_HISTORY = list_append(if_not_exists(IPN_HISTORY, :empty_list), :ipnValue),"
                 " IPN_STATUS = :status,"
                 " PAID = :paid"),
             ExpressionAttributeValues={
                 ':amt': Decimal(paramDict["mc_gross"]),
                 ':ipnValue': [{
                             "date": datetime.datetime.now().isoformat(),
+                            "sandbox": sandbox,
                             "value": paramDict
                         }],
                 ':empty_list': [],
-                ':zero': 0,
                 ":status": paramDict["payment_status"],
                 ":paid": False
             },
