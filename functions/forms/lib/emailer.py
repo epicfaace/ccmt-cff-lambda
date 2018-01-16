@@ -7,7 +7,7 @@ from email.mime.application import MIMEApplication
 # import bleach
 import html2text
 from pynliner import Pynliner
-from .util import format_paymentInfo, format_payment, dict_to_table
+from .util import format_paymentInfo, format_payment, display_form_dict
 
 ccmt_email_css = """
 table {
@@ -38,7 +38,7 @@ def send_confirmation_email(response):
             msgBody += "<img class='mainImage' src='{}' />".format(response["confirmationEmailInfo"]["image"])
         msgBody += response["confirmationEmailInfo"].get("message", "")
         if response["confirmationEmailInfo"]["showResponse"]:
-            msgBody += "<br><br>" + dict_to_table(response["value"])
+            msgBody += "<br><br>" + display_form_dict(response["value"])
         
         if 'items' in response['paymentInfo'] and len(response['paymentInfo']['items']) > 0:
             msgBody += "<br><br><table class=paymentInfoTable>"
@@ -52,7 +52,7 @@ def send_confirmation_email(response):
                 )
             msgBody += "</tr></table>"
         
-        msgBody += "<br><br><h2>Total Amount: {0}</h2><br><h2>Amount Received: {0}</h2>".format(format_paymentInfo(response["paymentInfo"]))
+        msgBody += "<br><br><h2>Total Amount: {}</h2><br><h2>Amount Received: {}</h2>".format(format_paymentInfo(response["paymentInfo"]), format_payment(response["IPN_TOTAL_AMOUNT"], 'USD'))
         if response["confirmationEmailInfo"]["showModifyLink"] and "modifyLink" in response:
             msgBody += "<br><br>Modify your response by going to this link: {}#responseId={}".format(response["modifyLink"], str(response["responseId"]))
         # todo: check amounts and Completed status, and then send.
