@@ -12,8 +12,9 @@ def deep_access(x, keylist):
 def calculate_price(expressionString, data):
     """Calculates price based on the expression. 
     For example, "participants.age * 12"
-    "participants * 12" will use participants' length if it is an array.abs
+    "participants * 12" will use participants' length if it is an array.
     """
+    if expressionString[0] == "$": expressionString = expressionString[1:]
     parser = Parser()
     expr = parser.parse(expressionString)
     context = {}

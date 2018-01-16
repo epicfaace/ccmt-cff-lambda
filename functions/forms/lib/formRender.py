@@ -48,7 +48,13 @@ class FormRender(DBConnection):
         form = self.get_form(formId, formVersion)
         schemaModifier = self.schemaModifiers.get_item(Key=form['schemaModifier'])['Item']
         paymentInfo = schemaModifier['paymentInfo']
-        paymentInfo['total'] = Decimal(calculate_price(paymentInfo['total'], response_data))
+
+        paymentInfo['total'] = 0
+        for paymentInfoItem in paymentInfo['items']:
+            paymentInfoItem['amount'] = Decimal(calculate_price(paymentInfoItem.get('amount', '0'), response_data))
+            paymentInfoItem['quantity'] = Decimal(calculate_price(paymentInfoItem.get('quantity', '0'), response_data))
+            paymentInfo['total'] += paymentInfoItem['amount'] * paymentInfoItem['quantity']
+        
         if not responseId:
             responseId = str(uuid.uuid4())
             self.responses.put_item(
