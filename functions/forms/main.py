@@ -31,11 +31,11 @@ def get_schemaModifier(schemaId, version):
 def update_or_create_form(apiKey, schema, schemaModifier, formId=0, version=1):
     # Updates form or creates form.
     pass
-def parseQuery(qs, event):
+def parseQuery(alias, qs, event):
     if not "action" in qs:
         raise Exception("No query string action provided.")
     if "apiKey" in qs:
-        ctrl = FormAdmin(qs['apiKey'])
+        ctrl = FormAdmin(alias, qs['apiKey'])
         if qs["action"] == "formList":
             return ctrl.list_forms()
         elif qs["action"] == "formResponses":
@@ -43,7 +43,7 @@ def parseQuery(qs, event):
         else:
             raise Exception("Action not found.")
     else:
-        ctrl = FormRender()
+        ctrl = FormRender(alias)
         if qs["action"] == "formRender":
             form = ctrl.render_form_by_id(qs["id"], qs["version"])
             if "resid" in qs:
@@ -55,16 +55,17 @@ def parseQuery(qs, event):
             raise Exception("Action not found.")
     
 def handle(event, context):
+    alias = event["stageVariables"]["alias"]
     try:
         if not "queryStringParameters" in event or not event["queryStringParameters"]:
             raise Exception("No query string provided.")
         else:
             qs = event["queryStringParameters"]
             if qs["action"] == "ipn":
-                handler = IpnHandler()
+                handler = IpnHandler(alias)
                 results = handler.ipnHandler(event["body"])
                 return make_response("", 200)
-            results = {"res": parseQuery(qs, event) }
+            results = {"res": parseQuery(alias, qs, event) }
     except Exception:
         results = {"error": True, "message": traceback.format_exc()}
         return make_response(results, 400)

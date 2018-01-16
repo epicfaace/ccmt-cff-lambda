@@ -2,8 +2,8 @@ from .dbConnection import DBConnection
 from boto3.dynamodb.conditions import Key
 
 class FormAdmin(DBConnection):
-    def __init__(self, apiKey):
-        super(FormAdmin, self).__init__()
+    def __init__(self, alias, apiKey):
+        super(FormAdmin, self).__init__(alias)
         center = self.centers.get_item(Key={"apiKey": apiKey})["Item"]
         if not center:
            raise Exception("Incorrect API Key. No center found for the specified API key.")

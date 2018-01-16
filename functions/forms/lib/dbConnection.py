@@ -1,12 +1,20 @@
 import boto3
+import os
 
 dynamodb = boto3.resource('dynamodb')
+
+possiblePrefixes = {
+    "DEV": "cff_dev",
+    "PROD": "cff_prod"
+}
+
 class DBConnection(object):
-    def __init__(self):
+    def __init__(self, alias):
         self.dynamodb = dynamodb
-        self.db = None
-        self.responses = dynamodb.Table("ccmt_cff_responses")
-        self.schemaModifiers = dynamodb.Table("ccmt_cff_schemaModifiers")
-        self.forms = dynamodb.Table("ccmt_cff_forms")
-        self.centers = dynamodb.Table("ccmt_cff_centers")
-        self.schemas = dynamodb.Table("ccmt_cff_schemas")
+        self.alias = alias
+        prefix = possiblePrefixes[alias]
+        self.responses = dynamodb.Table(prefix + ".responses")
+        self.schemaModifiers = dynamodb.Table(prefix + ".schemaModifiers")
+        self.forms = dynamodb.Table(prefix + ".forms")
+        self.centers = dynamodb.Table(prefix + ".centers")
+        self.schemas = dynamodb.Table(prefix + ".schemas")

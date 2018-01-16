@@ -54,9 +54,14 @@ Full list of IPN variables: https://developer.paypal.com/docs/classic/ipn/integr
     }
 """
 
+sandboxOptions = {
+    "DEV": True,
+    "PROD": False
+}
+
 class IpnHandler(DBConnection):
     def ipnHandler(self, param_str):
-        sandbox = True
+        sandbox = sandboxOptions[self.alias]
         VERIFY_URL_PROD = 'https://www.paypal.com/cgi-bin/webscr'
         VERIFY_URL_TEST = 'https://www.sandbox.paypal.com/cgi-bin/webscr'
 
@@ -145,6 +150,7 @@ class IpnHandler(DBConnection):
                 #":paid": False
             }
             )
+            raise Exception("Invalid IPN")
             """mongoConnection.db.ipn.insert_one({
                 "date_created": datetime.datetime.now().isoformat(),
                 "success": False,
@@ -153,5 +159,6 @@ class IpnHandler(DBConnection):
             })"""
             return "invalid"
         else:
+            raise Exception("IPN was neither VERIFIED nor INVALID.")
             return "else"
         return params

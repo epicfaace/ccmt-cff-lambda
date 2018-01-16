@@ -116,3 +116,62 @@ Deployment stages dev and prod:
 stageVariables: alias=DEV and alias=PROD
 
 Deploy API.
+
+
+# new policies
+## ccmt_cff_dev_lambda_db
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "DynamoDB:*"
+            ],
+            "Resource": [
+                "arn:aws:dynamodb:us-east-1:131049698002:table/cff_dev.forms",
+                "arn:aws:dynamodb:us-east-1:131049698002:table/cff_dev.centers",
+                "arn:aws:dynamodb:us-east-1:131049698002:table/cff_dev.schemas",
+                "arn:aws:dynamodb:us-east-1:131049698002:table/cff_dev.schemaModifiers",
+                "arn:aws:dynamodb:us-east-1:131049698002:table/cff_dev.responses",
+                "arn:aws:dynamodb:us-east-1:131049698002:table/cff_dev.forms/index/center-index"
+            ]
+        }
+    ]
+}
+## ccmt_cff_prod_lambda_db
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "DynamoDB:*"
+            ],
+            "Resource": [
+                "arn:aws:dynamodb:us-east-1:131049698002:table/cff_prod.forms",
+                "arn:aws:dynamodb:us-east-1:131049698002:table/cff_prod.centers",
+                "arn:aws:dynamodb:us-east-1:131049698002:table/cff_prod.schemas",
+                "arn:aws:dynamodb:us-east-1:131049698002:table/cff_prod.schemaModifiers",
+                "arn:aws:dynamodb:us-east-1:131049698002:table/cff_prod.responses",
+                "arn:aws:dynamodb:us-east-1:131049698002:table/cff_prod.forms/index/center-index"
+            ]
+        }
+    ]
+}
+# CCMT_CFF_lambda_logs 
+# ccmt_ses_access
+
+Create roles:
+
+# ccmt_cff_dev_lambda
+
+CCMT_CFF_lambda_logs 
+ccmt_cff_dev_lambda_db 
+ccmt-ses-access 
+
+# ccmt_cff_prod_lambda
+
+CCMT_CFF_lambda_logs 
+ccmt_cff_prod_lambda_db 
+ccmt-ses-access 
