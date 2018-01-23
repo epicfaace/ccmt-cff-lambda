@@ -175,3 +175,16 @@ ccmt-ses-access
 CCMT_CFF_lambda_logs 
 ccmt_cff_prod_lambda_db 
 ccmt-ses-access 
+
+
+# DEV SETUP
+1. Get dev access key.
+```aws configure --profile ccmt-cff-lambda-dev
+```
+
+AWS Access Key ID: prev screen
+AWS Secret Access Key: prev screen
+Default region name: us-east-1
+Default output format: JSON
+
+# PRODUCTION

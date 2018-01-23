@@ -6,7 +6,7 @@ Lambda function used for GCMW CFF (forms framework).
 apex deploy && apex invoke forms < event.json
 apex deploy --alias DEV && apex invoke --alias DEV forms < event.json
 # Dev / prod workflow
-apex deploy --env dev --alias DEV
+apex deploy --alias DEV
 apex deploy --env prod --alias PROD
 
 # other commands (old)
