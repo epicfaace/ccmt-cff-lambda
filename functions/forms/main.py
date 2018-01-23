@@ -40,6 +40,8 @@ def parseQuery(alias, qs, event):
             return ctrl.list_forms()
         elif qs["action"] == "formResponses":
             return ctrl.get_form_responses(qs["id"], qs["version"])
+        elif qs["action"] == "formEdit":
+            return ctrl.edit_form(qs["id"], qs["version"], json.loads(event["body"]))
         else:
             raise Exception("Action not found.")
     else:

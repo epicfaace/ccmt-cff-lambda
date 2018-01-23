@@ -1,5 +1,10 @@
 from .dbConnection import DBConnection
+import datetime
 from boto3.dynamodb.conditions import Key
+
+def pickIdVersion(dict):
+    # picks the ID and version from a dictionary.
+    return { k: dict[k] for k in ["id", "version"] }
 
 class FormAdmin(DBConnection):
     def __init__(self, alias, apiKey):
@@ -27,5 +32,38 @@ class FormAdmin(DBConnection):
             KeyConditionExpression=Key('formId').eq(formId)
         )
         return responses["Items"]
-    def edit_form(self, formId, formVersion):
-        pass
+    def edit_form(self, formId, formVersion, body):
+        formKey = {"id": formId, "version": int(formVersion)}
+        form = self.forms.get_item(Key=formKey)["Item"]
+        formUpdateExpression = []
+        formExpressionAttributeValues = {}
+        formExpressionAttributeNames = {}
+        if "schema" in body and body["schema"]["version"] != form["schema"]["version"]:
+            formUpdateExpression.append("schema = :s")
+            formExpressionAttributeValues[":s"] = pickIdVersion(body["schema"])
+        if "schemaModifier" in body and body["schemaModifier"] != form["schemaModifier"]:
+            formUpdateExpression.append("schemaModifier = :sm")
+            formExpressionAttributeValues[":sm"] = pickIdVersion(body["schemaModifier"])
+        #if "center" in body:
+        #    formUpdateExpression.append("center = :c")
+        #    formExpressionAttributeValues[":c"] = body["center"]
+        if "name" in body:
+            # name is a reserved keyword so need to do it this way:
+            formUpdateExpression.append("#name = :n")
+            formExpressionAttributeNames["#name"] = "name"
+            formExpressionAttributeValues[":n"] = body["name"]
+        formUpdateExpression.append("date_last_modified = :now")
+        formExpressionAttributeValues[":now"] = datetime.datetime.now().isoformat()
+        if len(formUpdateExpression) == 0:
+            raise Exception("Nothing to update.")
+        updatedValues = self.forms.update_item(
+            Key=formKey,
+            UpdateExpression= "SET " + ",".join(formUpdateExpression),
+            ExpressionAttributeValues=formExpressionAttributeValues,
+            ExpressionAttributeNames=formExpressionAttributeNames,
+            ReturnValues="UPDATED_NEW"
+        )["Attributes"]
+        return {
+            "success": True,
+            "updated_values": updatedValues
+        }

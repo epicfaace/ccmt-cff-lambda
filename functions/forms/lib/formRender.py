@@ -30,20 +30,6 @@ class FormRender(DBConnection):
         return self.schemas.get_item(Key={"id": id, "version": int(version)})["Item"]
     def get_schemaModifier(self, id, version):
         return self.schemaModifiers.get_item(Key={"id": id, "version": int(version)})["Item"]
-    def update_form(self, id, version, schemaId, schemaModifierId):
-        # Not used (yet).
-        return self.forms.update_item(
-            Key={
-                'id': str(id),
-                'version': int(version)
-            },
-            UpdateExpression="set schema = :s, schemaModifier =:sm",
-            ExpressionAttributeValues={
-                ':s': schemaId,
-                ':sm': schemaModifierId
-            },
-            ReturnValues="UPDATED_NEW"
-        )
     def submit_form(self, formId, formVersion, response_data, modifyLink, responseId):
         form = self.get_form(formId, formVersion)
         schemaModifier = self.schemaModifiers.get_item(Key=form['schemaModifier'])['Item']
