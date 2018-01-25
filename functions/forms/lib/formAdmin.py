@@ -1,4 +1,4 @@
-from .dbConnection import DBConnection
+from .formRender import FormRender
 import datetime
 from boto3.dynamodb.conditions import Key
 
@@ -6,7 +6,7 @@ def pickIdVersion(dict):
     # picks the ID and version from a dictionary.
     return { k: dict[k] for k in ["id", "version"] }
 
-class FormAdmin(DBConnection):
+class FormAdmin(FormRender):
     def __init__(self, alias, apiKey):
         super(FormAdmin, self).__init__(alias)
         center = self.centers.get_item(Key={"apiKey": apiKey})["Item"]
@@ -40,7 +40,9 @@ class FormAdmin(DBConnection):
         formExpressionAttributeValues = {}
         formExpressionAttributeNames = {}
         if "schema" in body and body["schema"]["version"] != form["schema"]["version"]:
-            formUpdateExpression.append("schema = :s")
+            # schema is a reserved keyword
+            formUpdateExpression.append("#schema = :s")
+            formExpressionAttributeNames["#schema"] = "schema"
             formExpressionAttributeValues[":s"] = pickIdVersion(body["schema"])
         if "schemaModifier" in body and body["schemaModifier"] != form["schemaModifier"]:
             formUpdateExpression.append("schemaModifier = :sm")
@@ -65,22 +67,24 @@ class FormAdmin(DBConnection):
             ReturnValues="UPDATED_NEW"
         )["Attributes"]
     def upsert_s_or_sm_entry(self, collection, data):
-        # Helper function. Put item if does not exist.
-        # if int(data["version"]) == -1: 
+        # Helper function. Puts (replaces) item; increments version # if # is "NEW".
+        if data["version"] == "NEW":
+            data["version"] = self.get_latest_version(collection, data["id"]) + 1
+            data["date_created"] = datetime.datetime.now().isoformat()
         data["date_last_modified"] = datetime.datetime.now().isoformat()
         collection.put_item(
             Item=data
         )
         return data
     def edit_form(self, formId, formVersion, body):
-        updatedValues = {}
         if "schema" in body:
-            updatedValues["schema"] = self.upsert_s_or_sm_entry(self.schemas, body["schema"])
+            body["schema"] = self.upsert_s_or_sm_entry(self.schemas, body["schema"])
         if "schemaModifier" in body:
-            updatedValues["schemaModifier"] = self.upsert_s_or_sm_entry(self.schemaModifiers, body["schemaModifier"])
-        # todo: if schema versions are updated, does this propagate over to the body?
-        updatedValues["form"] = self.update_form_entry(formId, formVersion, body)
+            body["schemaModifier"] = self.upsert_s_or_sm_entry(self.schemaModifiers, body["schemaModifier"])
+        body["form"] = self.update_form_entry(formId, formVersion, body)
+        body['schema_versions'] = self.get_versions(self.schemas, body['schema']['id'])
+        body['schemaModifier_versions'] = self.get_versions(self.schemaModifiers, body['schemaModifier']['id'])
         return {
             "success": True,
-            "updated_values": updatedValues
+            "updated_values": body
         }

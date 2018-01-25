@@ -49,10 +49,15 @@ def parseQuery(alias, qs, event):
     else:
         ctrl = FormRender(alias)
         if qs["action"] == "formRender":
-            form = ctrl.render_form_by_id(qs["id"], qs["version"])
+            # include_s_sm_versions=true for form editing.
+            form = ctrl.render_form_by_id(qs["id"], qs["version"], qs.get("include_s_sm_versions", None))
             if "resid" in qs:
                 form["responseLoaded"] = ctrl.get_response(qs["id"], qs["resid"])
             return form
+        elif qs["action"] == "schemaGet":
+            return ctrl.get_schema(qs["id"], qs["version"])
+        elif qs["action"] == "schemaModifierGet":
+            return ctrl.get_schemaModifier(qs["id"], qs["version"])
         elif qs["action"] == "formSubmit":
             return ctrl.submit_form(qs["formId"], qs["formVersion"], json.loads(event["body"]), qs.get("modifyLink", ""), qs.get("resid", ""))
         else:

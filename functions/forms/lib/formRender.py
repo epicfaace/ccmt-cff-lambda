@@ -4,15 +4,20 @@ from .responseHandler import response_verify_update
 import datetime
 import uuid
 from decimal import Decimal
+from boto3.dynamodb.conditions import Key
 # Ref:
 # https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GettingStarted.Python.03.html
 
 class FormRender(DBConnection):
-    def render_form_by_id(self, formId, formVersion):
+    def render_form_by_id(self, formId, formVersion, include_s_sm_versions):
         """Renders form with its schema and uiSchema resolved.
         """
         form = self.get_form(formId, formVersion)
         self.set_form_schemas(form)
+        if include_s_sm_versions:
+            # used when editing the form.
+            form['schema_versions'] = self.get_versions(self.schemas, form['schema']['id'])
+            form['schemaModifier_versions'] = self.get_versions(self.schemaModifiers, form['schemaModifier']['id'])
         return form
     def get_response(self, formId, responseId):
         """Renders response; used when editing a form."""
@@ -24,6 +29,17 @@ class FormRender(DBConnection):
         form['schema'] = self.schemas.get_item(Key=form['schema'])["Item"]
         form['schemaModifier'] = self.schemaModifiers.get_item(Key=form['schemaModifier'])["Item"]
         return form
+    def get_latest_version(self, collection, id):
+        return self.get_versions(collection, id, 1)[0]["version"]
+    def get_versions(self, collection, id, limit = None):
+        kwargs = {
+            "KeyConditionExpression":Key('id').eq(id),
+            "ProjectionExpression":"version, date_created, date_last_modified",
+            "ScanIndexForward":False # sort in descending order.
+        }
+        if limit:
+            kwargs["Limit"] = limit
+        return collection.query(**kwargs)['Items']
     def get_form(self, id, version):
         return self.forms.get_item(Key={"id": id, "version": int(version)})["Item"]
     def get_schema(self, id, version):

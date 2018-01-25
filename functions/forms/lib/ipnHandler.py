@@ -72,7 +72,9 @@ class IpnHandler(DBConnection):
         # param_str = sys.stdin.readline().strip()
         
         params = urllib.parse.parse_qsl(param_str)
-        
+
+        # verify payment. should be equal to amount owed.
+
         # Add '_notify-validate' parameter
         params.append(('cmd', '_notify-validate'))
 
