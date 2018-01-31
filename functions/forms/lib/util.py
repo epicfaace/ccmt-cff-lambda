@@ -3,10 +3,12 @@ import flatdict
 import re
 from collections import defaultdict
 """
-python -m doctest -v lib/util.py
+workon cff
+python -m doctest functions/forms/lib/util.py
 """
 
-DELIM_VALUE = "0000000000"
+DELIM_VALUE = "ASKLDJAKSLDJ12903812"
+SPACE_VALUE = "AJSID2309483ASFSDLJF"
 
 def parse_number_formula(data, variable):
     """
@@ -17,6 +19,7 @@ def parse_number_formula(data, variable):
     >>> parse_number_formula({"participants": [{"5K": 1},{"10K": 2},{"5K":3}]}, "participants.5K")
     4.0
     """
+    variable = variable.replace(SPACE_VALUE, " ")
     if DELIM_VALUE in variable:
         variable, key_value_eq = variable.split(DELIM_VALUE, 1)
     else:
@@ -91,6 +94,8 @@ def calculate_price(expressionString, data):
     50.0
     >>> calculate_price("(participants.race:None) * 25", {"participants": [{"name": "A", "race": "5K"}, {"name": "B", "race": "5K"}, {"name": "C", "race": "10K"}]})
     0.0
+    >>> calculate_price("(participants.race:'5K OK') * 25", {"participants": [{"name": "A", "race": "5K OK"}, {"name": "B", "race": "5K OK"}, {"name": "C", "race": "10K"}]})
+    50.0
     """
     """Calculates price based on the expression. 
     For example, "participants.age * 12"
@@ -98,9 +103,16 @@ def calculate_price(expressionString, data):
     """
     if ":" in expressionString:
         # py_expression_eval does not allow : characters.
-        expressionString = expressionString.replace(":", DELIM_VALUE);
+        expressionString = expressionString.replace(":", DELIM_VALUE)
+    if " " in expressionString:
+        # replace all spaces within single quotes and remove quotation marks.
+        for quoted_part in re.findall(r'(\'.+?\')', expressionString):
+            replaced = quoted_part.replace(" ", SPACE_VALUE)
+            replaced = replaced.replace("'", "")
+            expressionString = expressionString.replace(quoted_part, replaced)
     if expressionString[0] == "$":
         expressionString = expressionString[1:]
+    #raise Exception(expressionString)
     parser = Parser()
     expr = parser.parse(expressionString)
     context = {}
