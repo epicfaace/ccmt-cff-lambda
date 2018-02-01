@@ -56,6 +56,7 @@ class FormRender(DBConnection):
             paymentInfoItem['amount'] = Decimal(calculate_price(paymentInfoItem.get('amount', '0'), response_data))
             paymentInfoItem['quantity'] = Decimal(calculate_price(paymentInfoItem.get('quantity', '0'), response_data))
             paymentInfo['total'] += paymentInfoItem['amount'] * paymentInfoItem['quantity']
+        paymentInfo['items'] = [item for item in paymentInfo['items'] if item['quantity'] * item['amount'] != 0]
         
         if not responseId:
             responseId = str(uuid.uuid4())

@@ -96,10 +96,15 @@ def calculate_price(expressionString, data):
     0.0
     >>> calculate_price("(participants.race:'5K OK') * 25", {"participants": [{"name": "A", "race": "5K OK"}, {"name": "B", "race": "5K OK"}, {"name": "C", "race": "10K"}]})
     50.0
+    >>> calculate_price("$participants.race:5K", {"acceptTerms":True,"contact_name":{"last":"test","first":"test"},"address":{"zipcode":"test","state":"test","city":"test","line2":"test","line1":"test"},"phone":"7708182022","email":"aramaswamis+12@gmail.com","participants":[{"name":{"last":"test","first":"test"},"gender":"F","race":"5K","age":16,"shirt_size":"Youth M"}]})
+    1.0
+    >>> calculate_price("(participants.race:'5K - OK') * 25", {"participants": [{"name": "A", "race": "5K - OK"}, {"name": "B", "race": "5K - OK"}, {"name": "C", "race": "10K"}]})
+    50.0
     """
     """Calculates price based on the expression. 
     For example, "participants.age * 12"
     "participants * 12" will use participants' length if it is an array.
+    todo: base 64 encode here.
     """
     if ":" in expressionString:
         # py_expression_eval does not allow : characters.
