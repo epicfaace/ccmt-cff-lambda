@@ -16,5 +16,5 @@ class DBConnection(object):
         self.responses = dynamodb.Table(prefix + ".responses")
         self.schemaModifiers = dynamodb.Table(prefix + ".schemaModifiers")
         self.forms = dynamodb.Table(prefix + ".forms")
-        self.centers = dynamodb.Table(prefix + ".centers")
+        self.user_permissions = dynamodb.Table(prefix + ".user_permissions")
         self.schemas = dynamodb.Table(prefix + ".schemas")

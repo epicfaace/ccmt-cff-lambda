@@ -1,33 +1,42 @@
 from .formRender import FormRender
 import datetime
 from boto3.dynamodb.conditions import Key
+from .admin.user import User
+import boto3
 
 def pickIdVersion(dict):
     # picks the ID and version from a dictionary.
     return { k: dict[k] for k in ["id", "version"] }
 
+"""
+"forms::5e258c2c-99da-4340-b825-3f09921b4df5": ["Edit", "Delete", "ViewResponses", "EditResponses", "DeleteResponses"],
+"schemaModifiers::0a2e94a9-4ffb-489d-aa34-979fc9df1740": ["Edit", "Delete"],
+"forms::e4548443-99da-4340-b825-3f09921b4df5": ["Edit", "Delete"],
+"schemaModifiers::0a2e94a9-4ffb-489d-aa34-cdd4660d9d30": ["Edit", "Delete"],
+"schemas::5e258c2c-9b85-40ad-b764-979fc9df1740": ["Edit", "Delete"]
+"""
 class FormAdmin(FormRender):
     def __init__(self, alias, apiKey):
         super(FormAdmin, self).__init__(alias)
-        center = self.centers.get_item(Key={"apiKey": apiKey})["Item"]
-        if not center:
-           raise Exception("Incorrect API Key. No center found for the specified API key.")
-        self.centerId = center["id"]
-        if not self.centerId:
-           raise Exception("Center found, but no center ID found.")
-        self.apiKey = apiKey
+        user_permission = self.user_permissions.get_item(Key={"id": apiKey})["Item"]
+        if not user_permission:
+           raise Exception("No user permission entry found for the specified user id; please request one for user id: " + apiKey)
+        self.user = User(user_permission)
     def list_forms(self):
-        forms = self.forms.query(
-            IndexName='center-index',
-#           KeyConditionExpression=Key('center').eq(self.centerId)
-            KeyConditionExpression='center = :c',
-            ExpressionAttributeValues={ ':c': self.centerId} 
-        )
-        return forms["Items"]
+        keys = self.user.get_form_list_keys()
+        # raise Exception(keys)
+        response = self.dynamodb.batch_get_item(
+        RequestItems={
+            self.forms.table_name: {
+                'Keys': keys,           
+                'ConsistentRead': True            
+            }
+        })
+        return response["Responses"][self.forms.table_name]
     def get_form_responses(self, formId, formVersion):
+        if not self.user.can_view_responses(formId):
+            return False
         form = self.forms.get_item(Key={"id": formId, "version": int(formVersion)})["Item"]
-        if (form["center"] != self.centerId):
-            raise Exception("Your center does not have access to this form.")
         responses = self.responses.query(
             KeyConditionExpression=Key('formId').eq(formId)
         )
