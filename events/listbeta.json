@@ -1,0 +1,10 @@
+{
+    "a": "apex invoke --alias BETA forms < events/listbeta.json",
+    "queryStringParameters": {
+        "action": "formList",
+        "apiKey": "devdevasdklasjdklajsdlkjd"
+    },
+    "stageVariables": {
+        "alias": "BETA"
+    }
+}

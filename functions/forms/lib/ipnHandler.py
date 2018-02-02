@@ -56,6 +56,7 @@ Full list of IPN variables: https://developer.paypal.com/docs/classic/ipn/integr
 
 sandboxOptions = {
     "DEV": True,
+    "BETA": True,
     "PROD": False
 }
 

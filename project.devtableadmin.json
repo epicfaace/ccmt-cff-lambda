@@ -3,6 +3,6 @@
   "description": "Chinmaya Forms Framework Backend",
   "memory": 128,
   "timeout": 5,
-  "role": "arn:aws:iam::131049698002:role/ccmt_cff_dev_lambda",
+  "role": "arn:aws:iam::131049698002:role/ccmt_cff_devtableadmin_lambda",
   "profile": "ccmt-cff-lambda"
 }

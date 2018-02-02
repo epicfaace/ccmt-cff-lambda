@@ -5,6 +5,7 @@ dynamodb = boto3.resource('dynamodb')
 
 possiblePrefixes = {
     "DEV": "cff_dev",
+    "BETA": "cff_beta",
     "PROD": "cff_prod"
 }
 
@@ -16,5 +17,6 @@ class DBConnection(object):
         self.responses = dynamodb.Table(prefix + ".responses")
         self.schemaModifiers = dynamodb.Table(prefix + ".schemaModifiers")
         self.forms = dynamodb.Table(prefix + ".forms")
-        self.user_permissions = dynamodb.Table(prefix + ".user_permissions")
+        self.centers = dynamodb.Table(prefix + ".centers")
+        #self.user_permissions = dynamodb.Table(prefix + ".user_permissions")
         self.schemas = dynamodb.Table(prefix + ".schemas")
