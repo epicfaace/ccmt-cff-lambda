@@ -30,14 +30,14 @@ img.mainImage {
 }
 """
 
-def send_confirmation_email(response):
-    if "confirmationEmailInfo" in response and response["confirmationEmailInfo"]:
-        toField = response["confirmationEmailInfo"]["toField"]
-        msgBody = "<h1>{}</h1>".format(response["confirmationEmailInfo"].get("subject", "") or response["confirmationEmailInfo"].get("header", "") or "Confirmation Email")
-        if "image" in response["confirmationEmailInfo"]:
-            msgBody += "<img class='mainImage' src='{}' />".format(response["confirmationEmailInfo"]["image"])
-        msgBody += response["confirmationEmailInfo"].get("message", "")
-        if response["confirmationEmailInfo"]["showResponse"]:
+def send_confirmation_email(response, confirmationEmailInfo):
+    if confirmationEmailInfo:
+        toField = confirmationEmailInfo["toField"]
+        msgBody = "<h1>{}</h1>".format(confirmationEmailInfo.get("subject", "") or confirmationEmailInfo.get("header", "") or "Confirmation Email")
+        if "image" in confirmationEmailInfo:
+            msgBody += "<img class='mainImage' src='{}' />".format(confirmationEmailInfo["image"])
+        msgBody += confirmationEmailInfo.get("message", "")
+        if confirmationEmailInfo["showResponse"]:
             msgBody += "<br><br>" + display_form_dict(response["value"])
         
         if 'items' in response['paymentInfo'] and len(response['paymentInfo']['items']) > 0:
@@ -53,28 +53,30 @@ def send_confirmation_email(response):
             msgBody += "</tr></table>"
         
         msgBody += "<br><br><h2>Total Amount: {}</h2><br><h2>Amount Received: {}</h2>".format(format_paymentInfo(response["paymentInfo"]), format_payment(response["IPN_TOTAL_AMOUNT"], 'USD'))
-        if response["confirmationEmailInfo"]["showModifyLink"] and "modifyLink" in response:
+        if confirmationEmailInfo["showModifyLink"] and "modifyLink" in response:
             msgBody += "<br><br>Modify your response by going to this link: {}#responseId={}".format(response["modifyLink"], str(response["responseId"]))
         # todo: check amounts and Completed status, and then send.
         send_email(toEmail=response["value"][toField],
-                            fromEmail=response["confirmationEmailInfo"].get("from", "webmaster@chinmayamission.com"),
-                            fromName=response["confirmationEmailInfo"].get("fromName", "Webmaster"),
-                            subject=response["confirmationEmailInfo"].get("subject", "Confirmation Email"),
+                            fromEmail=confirmationEmailInfo.get("from", "webmaster@chinmayamission.com"),
+                            fromName=confirmationEmailInfo.get("fromName", "Webmaster"),
+                            subject=confirmationEmailInfo.get("subject", "Confirmation Email"),
                             msgBody=msgBody)
-def send_partial_payment_email(payment_info_old, payment_info_new, response):
+def send_partial_payment_email(payment_info_old, payment_info_new, response, confirmationEmailInfo):
     pass
-    """if "confirmationEmailInfo" in response and response["confirmationEmailInfo"]:
-        toField = response["confirmationEmailInfo"]["toField"]
+    """if "confirmationEmailInfo" in response and confirmationEmailInfo:
+        toField = confirmationEmailInfo["toField"]
         
         # todo: check amounts and Completed status, and then send.
         send_email(toEmail=response["value"][toField],
-                            fromEmail=response["confirmationEmailInfo"].get("from", "webmaster@chinmayamission.com"),
-                            fromName=response["confirmationEmailInfo"].get("fromName", "Webmaster"),
-                            subject=response["confirmationEmailInfo"].get("subject", "Confirmation Email"),
+                            fromEmail=confirmationEmailInfo.get("from", "webmaster@chinmayamission.com"),
+                            fromName=confirmationEmailInfo.get("fromName", "Webmaster"),
+                            subject=confirmationEmailInfo.get("subject", "Confirmation Email"),
                             msgBody=msgBody)
     """
-def send_update_notification_email(payment_info_old, payment_info_new, response):
-    if "confirmationEmailInfo" in response and response["confirmationEmailInfo"]:
+def send_update_notification_email(payment_info_old, payment_info_new, response, confirmationEmailInfo):
+    # Not used.
+    if confirmationEmailInfo:
+        toField = confirmationEmailInfo["toField"]
         amount_owed = 0
         if payment_info_old["currency"] == payment_info_new["currency"]:
             amount_owed = float(payment_info_new["total"] - payment_info_old["total"])
@@ -87,9 +89,9 @@ def send_update_notification_email(payment_info_old, payment_info_new, response)
         """.format(format_paymentInfo(payment_info_old), format_paymentInfo(payment_info_new), amount_owed_string)
         # todo: check amounts and Completed status, and then send.
         send_email(toEmail=response["value"][toField],
-                            fromEmail=response["confirmationEmailInfo"].get("from", "webmaster@chinmayamission.com"),
-                            fromName=response["confirmationEmailInfo"].get("fromName", "Webmaster"),
-                            subject=response["confirmationEmailInfo"].get("subject", "Confirmation Email") + " - Payment Required",
+                            fromEmail=confirmationEmailInfo.get("from", "webmaster@chinmayamission.com"),
+                            fromName=confirmationEmailInfo.get("fromName", "Webmaster"),
+                            subject=confirmationEmailInfo.get("subject", "Confirmation Email") + " - Payment Required",
                             msgBody=msgBody)
 def send_email(
     toEmail="aramaswamis@gmail.com",

@@ -50,6 +50,7 @@ class FormRender(DBConnection):
         form = self.get_form(formId, formVersion)
         schemaModifier = self.schemaModifiers.get_item(Key=form['schemaModifier'])['Item']
         paymentInfo = schemaModifier['paymentInfo']
+        confirmationEmailInfo = schemaModifier['confirmationEmailInfo']
 
         paymentInfo['total'] = 0
         for paymentInfoItem in paymentInfo['items']:
@@ -73,7 +74,6 @@ class FormRender(DBConnection):
                             'version': formVersion
                     }, # id, version.
                     "paymentInfo": paymentInfo,
-                    "confirmationEmailInfo": schemaModifier['confirmationEmailInfo'],
                     "PAID": False
             })
             return {"success": True, "action": "insert", "id": responseId, "paymentInfo": paymentInfo }
@@ -102,7 +102,8 @@ class FormRender(DBConnection):
                 ReturnValues="ALL_NEW"
                 )["Attributes"]
             if response_old.get("PAID", None) == True and paymentInfo["total"] <= response_old["paymentInfo"]["total"]:
-                response_verify_update(response_new, self.responses)
+                # If user is updating a name or something -- so that they don't owe any more money -- update immediately.
+                response_verify_update(response_new, self.responses, confirmationEmailInfo)
             return {
                 "success": True,
                 "action": "update",

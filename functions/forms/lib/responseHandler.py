@@ -1,7 +1,7 @@
 from .emailer import send_confirmation_email
 import datetime
 
-def response_verify_update(response, responsesCollection):
+def response_verify_update(response, responsesCollection, confirmationEmailInfo):
     """replace response value with pending update. called by ipn and otherwise when editing a form and the price doesn't change.
     Also sends an email notifying the user about the update."""
     response = responsesCollection.update_item(
@@ -31,5 +31,5 @@ def response_verify_update(response, responsesCollection):
             "#value": "value"
         },
         ReturnValues="ALL_NEW")["Attributes"]
-    response["confirmationEmailInfo"]["subject"] += " - Response Updated"
-    send_confirmation_email(response)
+    confirmationEmailInfo["subject"] += " - Response Updated"
+    send_confirmation_email(response, confirmationEmailInfo)
