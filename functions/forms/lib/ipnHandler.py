@@ -124,7 +124,7 @@ class IpnHandler(DBConnection):
                         }],
                         ':paymentHistoryValue': [{
                             "amount": Decimal(self.paramDict["mc_gross"]),
-                            "currency": Decimal(self.paramDict["mc_currency"]),
+                            "currency": self.paramDict["mc_currency"],
                             "date": datetime.datetime.now().isoformat(),
                             "method": "paypal"
                         }],
