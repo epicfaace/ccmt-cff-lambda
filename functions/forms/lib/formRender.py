@@ -52,13 +52,26 @@ class FormRender(DBConnection):
         paymentInfo = schemaModifier['paymentInfo']
         confirmationEmailInfo = schemaModifier['confirmationEmailInfo']
 
+        paymentInfoItemsWithTotal = []
         paymentInfo['total'] = 0
         for paymentInfoItem in paymentInfo['items']:
+            if "$total" in paymentInfoItem["amount"] or "$total" in paymentInfoItem["quantity"]:
+                # Take care of this at the end.
+                paymentInfoItemsWithTotal.append(paymentInfoItem)
+                break
             paymentInfoItem['amount'] = Decimal(calculate_price(paymentInfoItem.get('amount', '0'), response_data))
             paymentInfoItem['quantity'] = Decimal(calculate_price(paymentInfoItem.get('quantity', '0'), response_data))
             paymentInfo['total'] += paymentInfoItem['amount'] * paymentInfoItem['quantity']
-        paymentInfo['items'] = [item for item in paymentInfo['items'] if item['quantity'] * item['amount'] != 0]
         
+        # Now take care of items for coupon code, round off, etc. -- which need the total value to work.
+        response_data["total"] = float(paymentInfo["total"])
+        for paymentInfoItem in paymentInfoItemsWithTotal:
+            paymentInfoItem['amount'] = Decimal(calculate_price(paymentInfoItem.get('amount', '0'), response_data))
+            paymentInfoItem['quantity'] = Decimal(calculate_price(paymentInfoItem.get('quantity', '0'), response_data))
+            paymentInfo['total'] += paymentInfoItem['amount'] * paymentInfoItem['quantity']
+        response_data.pop("total", None)
+
+        paymentInfo['items'] = [item for item in paymentInfo['items'] if item['quantity'] * item['amount'] != 0]
         if not responseId:
             responseId = str(uuid.uuid4())
             self.responses.put_item(
