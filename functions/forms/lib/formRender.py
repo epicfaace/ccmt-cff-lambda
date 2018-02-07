@@ -55,7 +55,7 @@ class FormRender(DBConnection):
         paymentInfoItemsWithTotal = []
         paymentInfo['total'] = 0
         for paymentInfoItem in paymentInfo['items']:
-            if "$total" in paymentInfoItem["amount"] or "$total" in paymentInfoItem["quantity"]:
+            if "$total" in paymentInfoItem.get("amount", "0") or "$total" in paymentInfoItem.get("quantity", "0"):
                 # Take care of this at the end.
                 paymentInfoItemsWithTotal.append(paymentInfoItem)
                 break

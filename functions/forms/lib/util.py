@@ -24,7 +24,9 @@ def parse_number_formula(data, variable):
         variable, key_value_eq = variable.split(DELIM_VALUE, 1)
     else:
         key_value_eq = None
-    value = deep_access_list(data, variable.split("."), key_value_eq)
+    value = deep_access_list(data, variable.strip().split("."), key_value_eq)
+    if not value:
+        return 0
     if type(value) is list:
         value = len(value)
     if isinstance(value, bool):
