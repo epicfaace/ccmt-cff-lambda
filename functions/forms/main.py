@@ -36,6 +36,9 @@ def parseQuery(alias, qs, event):
         raise Exception("No query string action provided.")
     if "apiKey" in qs:
         ctrl = FormAdmin(alias, qs['apiKey'])
+        if qs["action"] == "formRenderAdmin":
+            # render form, plus schema and schemaModifier version list and couponCodes, other form attributes, etc.
+            return ctrl.render_form_by_id(qs["id"], qs["version"], True)
         if qs["action"] == "formList":
             return ctrl.list_forms()
         elif qs["action"] == "formResponses":
@@ -50,7 +53,7 @@ def parseQuery(alias, qs, event):
         ctrl = FormRender(alias)
         if qs["action"] == "formRender":
             # include_s_sm_versions=true for form editing.
-            form = ctrl.render_form_by_id(qs["id"], qs["version"], qs.get("include_s_sm_versions", None))
+            form = ctrl.render_form_by_id(qs["id"], qs["version"], False)
             if "resid" in qs:
                 form["responseLoaded"] = ctrl.get_response(qs["id"], qs["resid"])
             return form

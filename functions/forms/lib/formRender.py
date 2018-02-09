@@ -9,13 +9,13 @@ from boto3.dynamodb.conditions import Key
 # https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GettingStarted.Python.03.html
 
 class FormRender(DBConnection):
-    def render_form_by_id(self, formId, formVersion, include_s_sm_versions):
+    def render_form_by_id(self, formId, formVersion, is_admin=False):
         """Renders form with its schema and uiSchema resolved.
         """
-        form = self.get_form(formId, formVersion)
+        form = self.get_form(formId, formVersion, is_admin)
         self.set_form_schemas(form)
-        if include_s_sm_versions:
-            # used when editing the form.
+        if is_admin:
+            # include schema and schemaModifier versions; used when editing the form.
             form['schema_versions'] = self.get_versions(self.schemas, form['schema']['id'])
             form['schemaModifier_versions'] = self.get_versions(self.schemaModifiers, form['schemaModifier']['id'])
         return form
@@ -40,14 +40,30 @@ class FormRender(DBConnection):
         if limit:
             kwargs["Limit"] = limit
         return collection.query(**kwargs)['Items']
-    def get_form(self, id, version):
-        return self.forms.get_item(Key={"id": id, "version": int(version)})["Item"]
+    def get_form(self, id, version, is_admin=False, couponCodes = False):
+        if is_admin:
+            # return all fields (including coupon codes).
+            return self.forms.get_item(
+                Key={"id": id, "version": int(version)}
+            )["Item"]
+        else:
+            return self.forms.get_item(
+                Key={"id": id, "version": int(version)},
+                ProjectionExpression="id, #name, #schema, schemaModifier" +
+                    (", couponCodes, couponCodes_used" if couponCodes else ""),
+                ExpressionAttributeNames={"#name": "name", "#schema": "schema"}
+            )["Item"]
     def get_schema(self, id, version):
         return self.schemas.get_item(Key={"id": id, "version": int(version)})["Item"]
     def get_schemaModifier(self, id, version):
         return self.schemaModifiers.get_item(Key={"id": id, "version": int(version)})["Item"]
     def submit_form(self, formId, formVersion, response_data, modifyLink, responseId):
-        form = self.get_form(formId, formVersion)
+        def calc_item_total_to_paymentInfo(paymentInfoItem, paymentInfo):
+            paymentInfoItem['amount'] = Decimal(calculate_price(paymentInfoItem.get('amount', '0'), response_data))
+            paymentInfoItem['quantity'] = Decimal(calculate_price(paymentInfoItem.get('quantity', '0'), response_data))
+            paymentInfo['total'] += paymentInfoItem['amount'] * paymentInfoItem['quantity']
+        
+        form = self.get_form(formId, formVersion, couponCodes=True)
         schemaModifier = self.schemaModifiers.get_item(Key=form['schemaModifier'])['Item']
         paymentInfo = schemaModifier['paymentInfo']
         confirmationEmailInfo = schemaModifier['confirmationEmailInfo']
@@ -55,20 +71,34 @@ class FormRender(DBConnection):
         paymentInfoItemsWithTotal = []
         paymentInfo['total'] = 0
         for paymentInfoItem in paymentInfo['items']:
+            paymentInfoItem.setdefault("name", "Payment Item")
+            paymentInfoItem.setdefault("description", "Payment Item")
+            paymentInfoItem.setdefault("quantity", "1")
             if "$total" in paymentInfoItem.get("amount", "0") or "$total" in paymentInfoItem.get("quantity", "0"):
                 # Take care of this at the end.
                 paymentInfoItemsWithTotal.append(paymentInfoItem)
                 continue
-            paymentInfoItem['amount'] = Decimal(calculate_price(paymentInfoItem.get('amount', '0'), response_data))
-            paymentInfoItem['quantity'] = Decimal(calculate_price(paymentInfoItem.get('quantity', '0'), response_data))
-            paymentInfo['total'] += paymentInfoItem['amount'] * paymentInfoItem['quantity']
+            calc_item_total_to_paymentInfo(paymentInfoItem, paymentInfo)
         
-        # Now take care of items for coupon code, round off, etc. -- which need the total value to work.
+        # Now take care of items for round off, etc. -- which need the total value to work.
         response_data["total"] = float(paymentInfo["total"])
         for paymentInfoItem in paymentInfoItemsWithTotal:
-            paymentInfoItem['amount'] = Decimal(calculate_price(paymentInfoItem.get('amount', '0'), response_data))
-            paymentInfoItem['quantity'] = Decimal(calculate_price(paymentInfoItem.get('quantity', '0'), response_data))
-            paymentInfo['total'] += paymentInfoItem['amount'] * paymentInfoItem['quantity']
+            calc_item_total_to_paymentInfo(paymentInfoItem, paymentInfo)
+
+        # Redeem coupon codes.
+        if "couponCode" in response_data and response_data["couponCode"]:
+            couponCode = response_data["couponCode"]
+            if "couponCodes" in form and couponCode in form["couponCodes"]:
+                coupon_paymentInfoItem = form["couponCodes"][couponCode]
+                coupon_paymentInfoItem.setdefault("quantity", "1")
+                coupon_paymentInfoItem.setdefault("name", "Coupon Code")
+                coupon_paymentInfoItem.setdefault("description", "Coupon Code")
+                calc_item_total_to_paymentInfo(coupon_paymentInfoItem, paymentInfo)
+                paymentInfo['items'].append(coupon_paymentInfoItem)
+            else:
+                return {"success": False, "message": "Coupon Code not Found.", "fields_to_clear": ["couponCode"]}
+            
+            # verify max #.
         response_data.pop("total", None)
 
         paymentInfo['items'] = [item for item in paymentInfo['items'] if item['quantity'] * item['amount'] != 0]

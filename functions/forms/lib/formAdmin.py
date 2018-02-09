@@ -86,9 +86,9 @@ class FormAdmin(FormRender):
 		if "schemaModifier" in body and body["schemaModifier"] != form["schemaModifier"]:
 			formUpdateExpression.append("schemaModifier = :sm")
 			formExpressionAttributeValues[":sm"] = pickIdVersion(body["schemaModifier"])
-		# if "center" in body:
-		#	formUpdateExpression.append("center = :c")
-		#	formExpressionAttributeValues[":c"] = body["center"]
+		if "couponCodes" in body:
+			formUpdateExpression.append("couponCodes = :cc")
+			formExpressionAttributeValues[":cc"] = body["couponCodes"]
 		if "name" in body:
 			# name is a reserved keyword so need to do it this way:
 			formUpdateExpression.append("#name = :n")
