@@ -74,14 +74,14 @@ def deep_access_list(x, keylist, key_value_eq=None):
             val = dict_array_to_sum_dict(val, key_value_eq).get(key, 0.00)
         # 30
         else:
-            val = val[key]
+            val = val.get(key, 0)
     return val
 
 def deep_access(x, keylist):
     """Access an arbitrary nested part of dictionary x using keylist."""
     val = x
     for key in keylist:
-        val = val[key]
+        val = val.get(key, 0)
     return val
 
 def calculate_price(expressionString, data):
