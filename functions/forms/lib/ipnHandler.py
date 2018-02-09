@@ -165,7 +165,7 @@ class IpnHandler(DBConnection):
 
             return params
         elif r.text == 'INVALID':
-            self.append_ipn_with_status("INVALID", "Rejected by PayPal")
+            self.append_ipn_with_status("INVALID", "Rejected by PayPal: {}".format(VERIFY_URL))
             raise Exception("Invalid IPN")
             return "invalid"
         else:

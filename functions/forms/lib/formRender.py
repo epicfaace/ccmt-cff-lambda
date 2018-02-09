@@ -58,7 +58,7 @@ class FormRender(DBConnection):
             if "$total" in paymentInfoItem.get("amount", "0") or "$total" in paymentInfoItem.get("quantity", "0"):
                 # Take care of this at the end.
                 paymentInfoItemsWithTotal.append(paymentInfoItem)
-                break
+                continue
             paymentInfoItem['amount'] = Decimal(calculate_price(paymentInfoItem.get('amount', '0'), response_data))
             paymentInfoItem['quantity'] = Decimal(calculate_price(paymentInfoItem.get('quantity', '0'), response_data))
             paymentInfo['total'] += paymentInfoItem['amount'] * paymentInfoItem['quantity']
