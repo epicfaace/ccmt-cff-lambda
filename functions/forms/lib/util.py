@@ -10,14 +10,14 @@ python -m doctest functions/forms/lib/util.py
 DELIM_VALUE = "ASKLDJAKSLDJ12903812"
 SPACE_VALUE = "AJSID2309483ASFSDLJF"
 
-def parse_number_formula(data, variable):
+def parse_number_formula(data, variable, numeric=True):
     """
     >>> parse_number_formula({"A": 12}, "A")
-    12.00
+    12.0
     >>> parse_number_formula({"A": {"B":15}}, "A.B")
-    15.00
+    15.0
     >>> parse_number_formula({"participants": [{"5K": 1},{"10K": 2},{"5K":3}]}, "participants.5K")
-    4.00
+    4.0
     """
     variable = variable.replace(SPACE_VALUE, " ")
     if DELIM_VALUE in variable:
@@ -25,22 +25,27 @@ def parse_number_formula(data, variable):
     else:
         key_value_eq = None
     value = deep_access_list(data, variable.strip().split("."), key_value_eq)
-    if not value:
-        return 0
-    if type(value) is list:
-        value = len(value)
-    if isinstance(value, bool):
-        value = 1 if value is True else 0
-    if not isinstance(value, (int, float)):
-        raise ValueError("Key {} is not numeric - it's equal to {}".format(variable, value))
-    return round(float(value), 2)
+    if numeric:
+        if not value:
+            return 0
+        if type(value) is list:
+            value = len(value)
+        if key_value_eq and type(value) is str:
+            value = (value.strip() == key_value_eq.strip())
+        if isinstance(value, bool):
+            value = 1 if value is True else 0
+        if not isinstance(value, (int, float)):
+            raise ValueError("Key {} is not numeric - it's equal to {}".format(variable, value))
+        return round(float(value), 2)
+    else:
+        return value
 
 def dict_array_to_sum_dict(original, key_value_eq = None):
     """
     >>> dict_array_to_sum_dict([{"a":2, "b":5}, {"a":1, "b":6}]) 
-    {'a': 3.00, 'b': 11.00}
+    {'a': 3.0, 'b': 11.0}
     >>> dict_array_to_sum_dict([{"a":"one"}, {"a":"two"}, {"a":"one"}], "one") 
-    {'a': 2.00}
+    {'a': 2.0}
     >>> dict_array_to_sum_dict([{"a":"one"}, {"a":"two"}, {"a":"one"}], "zero") 
     {}
     """"""
@@ -60,18 +65,18 @@ def deep_access_list(x, keylist, key_value_eq=None):
     >>> deep_access_list({"a":2}, ["a"])
     2
     >>> deep_access_list({"a":[{"a":2, "b":5}, {"a":1, "b":6}]}, ["a", "a"])
-    3.00
+    3.0
     >>> deep_access_list({"a":[{"a":"cat1", "b":"cat2"}, {"a":"cat3", "b":"cat2"}]}, ["a", "a"], "cat1")
-    1.00
+    1.0
     >>> deep_access_list({"a":[{"a":"cat1", "b":"cat2"}, {"a":"cat3", "b":"cat2"}]}, ["a", "b"], "cat2")
-    2.00
+    2.0
     """
     """
     Access an arbitrarily nested part of dictionary x using keylist, if key equals keyname."""
     val = x
     for key in keylist:
         if type(val) is list:
-            val = dict_array_to_sum_dict(val, key_value_eq).get(key, 0.00)
+            val = dict_array_to_sum_dict(val, key_value_eq).get(key, 0.0)
         # 30
         else:
             val = val.get(key, 0)
@@ -87,27 +92,32 @@ def deep_access(x, keylist):
 def calculate_price(expressionString, data):
     """
     >>> calculate_price("x * 12", {"x": 1})
-    12.00
+    12.0
     >>> calculate_price("participants * 25", {"participants": [1,2,3]})
-    75.00
+    75.0
     >>> calculate_price("participant.x * 25", {"participant": {"x": 2}})
-    50.00
+    50.0
     >>> calculate_price("participants.race:5K", {"participants": [{"name": "A", "race": "5K"}, {"name": "B", "race": "5K"}, {"name": "C", "race": "10K"}]})
-    2.00
+    2.0
     >>> calculate_price("(participants.race:5K) * 25", {"participants": [{"name": "A", "race": "5K"}, {"name": "B", "race": "5K"}, {"name": "C", "race": "10K"}]})
-    50.00
+    50.0
     >>> calculate_price("(participants.race:None) * 25", {"participants": [{"name": "A", "race": "5K"}, {"name": "B", "race": "5K"}, {"name": "C", "race": "10K"}]})
-    0.00
+    0.0
     >>> calculate_price("(participants.race:'5K OK') * 25", {"participants": [{"name": "A", "race": "5K OK"}, {"name": "B", "race": "5K OK"}, {"name": "C", "race": "10K"}]})
-    50.00
+    50.0
     >>> calculate_price("$participants.race:5K", {"acceptTerms":True,"contact_name":{"last":"test","first":"test"},"address":{"zipcode":"test","state":"test","city":"test","line2":"test","line1":"test"},"phone":"7708182022","email":"aramaswamis+12@gmail.com","participants":[{"name":{"last":"test","first":"test"},"gender":"F","race":"5K","age":16,"shirt_size":"Youth M"}]})
-    1.00
+    1.0
     >>> calculate_price("$roundOff * (16 + $total % 5)", {"roundOff": True, "total": 87})
-    18.00
+    18.0
     >>> calculate_price("$roundOff * (16 + $total % 5)", {"roundOff": False, "total": 87})
-    0.00
+    0.0
+    >>> # Test for equality of strings:
+    >>> calculate_price("age < 13 and race:'Half Marathon'==1", {"age": 12, "race": "Half Marathon"})
+    True
+    >>> calculate_price("age < 13 and race:'Half Marathon'==1", {"age": 12, "race": "Full Marathon"})
+    False
     >>> calculate_price("(participants.race:'5K - OK') * 25", {"participants": [{"name": "A", "race": "5K - OK"}, {"name": "B", "race": "5K - OK"}, {"name": "C", "race": "10K"}]})
-    50.00
+    50.0
     """
     """Calculates price based on the expression. 
     For example, "participants.age * 12"
