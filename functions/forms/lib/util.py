@@ -145,8 +145,8 @@ def calculate_price(expressionString, data):
 
 def format_payment(total, currency='USD'):
     if currency == "USD":
-        return "${}".format(total)
-    return "{} {}".format(currency, total)
+        return "${:,.2f}".format(total)
+    return "{} {:,.2f}".format(currency, total)
 def format_paymentInfo(paymentInfo):
     return format_payment(paymentInfo.get("total", "N/A"), paymentInfo.get("currency", "USD"))
 
