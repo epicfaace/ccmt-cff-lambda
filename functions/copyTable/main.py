@@ -6,7 +6,6 @@
 
 import logging
 from time import sleep
-
 import boto3
 from botocore.exceptions import ClientError
 

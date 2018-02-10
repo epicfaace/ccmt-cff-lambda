@@ -1,10 +1,12 @@
 from .dbConnection import DBConnection
 from .util import calculate_price
 from .responseHandler import response_verify_update
+from .render.couponCodes import coupon_code_verify_max, coupon_code_record_as_used
 import datetime
 import uuid
 from decimal import Decimal
 from boto3.dynamodb.conditions import Key
+# from botocore.exceptions import ClientError
 # Ref:
 # https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GettingStarted.Python.03.html
 
@@ -41,15 +43,14 @@ class FormRender(DBConnection):
             kwargs["Limit"] = limit
         return collection.query(**kwargs)['Items']
     def get_form(self, id, version, is_admin=False, couponCodes = False):
+        formKey = {"id": id, "version": int(version)}
         if is_admin:
             # return all fields (including coupon codes).
-            return self.forms.get_item(
-                Key={"id": id, "version": int(version)}
-            )["Item"]
+            return self.forms.get_item(Key=formKey)["Item"]
         else:
             return self.forms.get_item(
-                Key={"id": id, "version": int(version)},
-                ProjectionExpression="id, #name, #schema, schemaModifier" +
+                Key=formKey,
+                ProjectionExpression="id, version, #name, #schema, schemaModifier" +
                     (", couponCodes, couponCodes_used" if couponCodes else ""),
                 ExpressionAttributeNames={"#name": "name", "#schema": "schema"}
             )["Item"]
@@ -62,6 +63,11 @@ class FormRender(DBConnection):
             paymentInfoItem['amount'] = Decimal(calculate_price(paymentInfoItem.get('amount', '0'), response_data))
             paymentInfoItem['quantity'] = Decimal(calculate_price(paymentInfoItem.get('quantity', '0'), response_data))
             paymentInfo['total'] += paymentInfoItem['amount'] * paymentInfoItem['quantity']
+        
+        newResponse = False
+        if not responseId:
+            responseId = str(uuid.uuid4())
+            newResponse = True
         
         form = self.get_form(formId, formVersion, couponCodes=True)
         schemaModifier = self.schemaModifiers.get_item(Key=form['schemaModifier'])['Item']
@@ -96,14 +102,17 @@ class FormRender(DBConnection):
                 calc_item_total_to_paymentInfo(coupon_paymentInfoItem, paymentInfo)
                 paymentInfo['items'].append(coupon_paymentInfoItem)
             else:
-                return {"success": False, "message": "Coupon Code not Found.", "fields_to_clear": ["couponCode"]}
-            
-            # verify max #.
+                return {"success": False, "message": "Coupon Code not found.", "fields_to_clear": ["couponCode"]}
+            # verify max # of coupons:
+            if not coupon_code_verify_max(form, couponCode):
+                return {"success": False, "message": "Maximum number of coupon codes have already been redeemed.", "fields_to_clear": ["couponCode"]}
+            else:
+                coupon_code_record_as_used(self.forms, form, couponCode, responseId)
+        
         response_data.pop("total", None)
 
         paymentInfo['items'] = [item for item in paymentInfo['items'] if item['quantity'] * item['amount'] != 0]
-        if not responseId:
-            responseId = str(uuid.uuid4())
+        if newResponse:
             self.responses.put_item(
                 Item={
                     "formId": formId, # partition key
