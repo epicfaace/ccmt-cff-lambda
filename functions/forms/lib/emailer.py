@@ -42,15 +42,15 @@ def send_confirmation_email(response, confirmationEmailInfo):
         
         if 'items' in response['paymentInfo'] and len(response['paymentInfo']['items']) > 0:
             msgBody += "<br><br><table class=paymentInfoTable>"
-            msgBody += "<tr><th>Name</th><th>Description</th><th>Amount</th><th>Quantity</th></tr><tr>"
+            msgBody += "<tr><th>Name</th><th>Description</th><th>Amount</th><th>Quantity</th></tr>"
             for paymentInfoItem in response['paymentInfo']['items']:
-                msgBody += "<td>{}</td><td>{}</td><td>{}</td><td>{}</td>".format(
+                msgBody += "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>".format(
                     paymentInfoItem.get('name',''),
                     paymentInfoItem.get('description',''),
                     format_payment(paymentInfoItem.get('amount',''), 'USD'),
                     paymentInfoItem.get('quantity','')
                 )
-            msgBody += "</tr></table>"
+            msgBody += "</table>"
         
         msgBody += "<br><br><h2>Total Amount: {}</h2><br><h2>Amount Received: {}</h2>".format(format_paymentInfo(response["paymentInfo"]), format_payment(response["IPN_TOTAL_AMOUNT"], 'USD'))
         if confirmationEmailInfo["showModifyLink"] and "modifyLink" in response:
