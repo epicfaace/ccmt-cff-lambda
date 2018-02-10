@@ -52,7 +52,7 @@ def send_confirmation_email(response, confirmationEmailInfo):
                 )
             msgBody += "</table>"
         
-        msgBody += "<br><br><h2>Total Amount: {}</h2><br><h2>Amount Received: {}</h2>".format(format_paymentInfo(response["paymentInfo"]), format_payment(response["IPN_TOTAL_AMOUNT"], 'USD'))
+        msgBody += "<br><br><h2>Total Amount: {}</h2><br><h2>Amount Received: {}</h2>".format(format_paymentInfo(response["paymentInfo"]), format_payment(response.get("IPN_TOTAL_AMOUNT", 0), 'USD'))
         if confirmationEmailInfo["showModifyLink"] and "modifyLink" in response:
             msgBody += "<br><br>Modify your response by going to this link: {}#responseId={}".format(response["modifyLink"], str(response["responseId"]))
         # todo: check amounts and Completed status, and then send.

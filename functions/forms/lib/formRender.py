@@ -104,11 +104,12 @@ class FormRender(DBConnection):
             else:
                 return {"success": False, "message": "Coupon Code not found.", "fields_to_clear": ["couponCode"]}
             # verify max # of coupons:
-            if not coupon_code_verify_max(form, couponCode):
+            if not coupon_code_verify_max(form, couponCode, responseId):
                 return {"success": False, "message": "Maximum number of coupon codes have already been redeemed.", "fields_to_clear": ["couponCode"]}
             else:
                 coupon_code_record_as_used(self.forms, form, couponCode, responseId)
-        
+        else:
+            response_data.pop("couponCode", None)
         response_data.pop("total", None)
 
         paymentInfo['items'] = [item for item in paymentInfo['items'] if item['quantity'] * item['amount'] != 0]
@@ -154,8 +155,8 @@ class FormRender(DBConnection):
                 # todo: if not updated, do this ...
                 ReturnValues="ALL_NEW"
                 )["Attributes"]
-            if response_old.get("PAID", None) == True and paymentInfo["total"] <= response_old["paymentInfo"]["total"]:
-                # If user is updating a name or something -- so that they don't owe any more money -- update immediately.
+            if paymentInfo["total"] == 0 or (response_old.get("PAID", None) == True and paymentInfo["total"] <= response_old["paymentInfo"]["total"]):
+                # If 1) total amount is zero (user uses coupon code to get for free); or 2) user is updating a name or something -- so that they don't owe any more money -- update immediately.
                 response_verify_update(response_new, self.responses, confirmationEmailInfo)
             return {
                 "success": True,

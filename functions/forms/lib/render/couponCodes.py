@@ -1,7 +1,8 @@
-def coupon_code_verify_max(form, code):
+def coupon_code_verify_max(form, code, responseId=None):
+    # True: coupon code can be used (either length of coupon codes used is not at max, or your ID has already used the coupon code before.)
     responses = form.get("couponCodes_used", {}).get(code, {}).get("responses", [])
     maximum = form.get("couponCodes", {}).get(code, {}).get("max", 0)
-    return len(responses) < maximum
+    return responseId in responses or len(responses) < maximum
 
 def coupon_code_record_as_used(formsCollection, form, code, responseId):
     # form = formsCollection.get_item(Key=formKey)["Item"]
