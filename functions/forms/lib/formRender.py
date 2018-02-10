@@ -130,6 +130,7 @@ class FormRender(DBConnection):
             })
             return {"success": True, "action": "insert", "id": responseId, "paymentInfo": paymentInfo }
         else:
+            # Updating.
             response_old = self.responses.get_item(Key={ 'formId': formId, 'responseId': responseId })["Item"]
             response_new = self.responses.update_item(
                 Key={ 'formId': formId, 'responseId': responseId },
