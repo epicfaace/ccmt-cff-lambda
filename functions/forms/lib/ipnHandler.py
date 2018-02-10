@@ -146,7 +146,8 @@ class IpnHandler(DBConnection):
             
             #if self.paramDict["payment_status"] == "Completed":
             
-            fullyPaid = response["IPN_TOTAL_AMOUNT"] >= response["paymentInfo"]["total"]
+            # Has user paid the amount owed? Checks the PENDING_UPDATE for the total amount owed, else the response itself (when not updating).
+            fullyPaid = response["IPN_TOTAL_AMOUNT"] >= response.get("PENDING_UPDATE", response)["paymentInfo"]["total"]
 
             if fullyPaid and "PENDING_UPDATE" in response:
                 # Updates value from saved pending update value and sends email.
