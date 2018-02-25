@@ -33,7 +33,10 @@ img.mainImage {
 def send_confirmation_email(response, confirmationEmailInfo):
     if confirmationEmailInfo:
         toField = confirmationEmailInfo["toField"]
-        msgBody = "<h1>{}</h1>".format(confirmationEmailInfo.get("subject", "") or confirmationEmailInfo.get("header", "") or "Confirmation Email")
+        msgBody = ""
+        if "contentHeader" in confirmationEmailInfo:
+            msgBody += confirmationEmailInfo["contentHeader"]
+        msgBody += "<h1>{}</h1>".format(confirmationEmailInfo.get("subject", "") or confirmationEmailInfo.get("header", "") or "Confirmation Email")
         if "image" in confirmationEmailInfo:
             msgBody += "<img class='mainImage' src='{}' />".format(confirmationEmailInfo["image"])
         msgBody += confirmationEmailInfo.get("message", "")
@@ -55,6 +58,8 @@ def send_confirmation_email(response, confirmationEmailInfo):
         msgBody += "<br><br><h2>Total Amount: {}</h2><br><h2>Amount Received: {}</h2>".format(format_paymentInfo(response["paymentInfo"]), format_payment(response.get("IPN_TOTAL_AMOUNT", 0), 'USD'))
         if confirmationEmailInfo["showModifyLink"] and "modifyLink" in response:
             msgBody += "<br><br>Modify your response by going to this link: {}#responseId={}".format(response["modifyLink"], str(response["responseId"]))
+        if "contentFooter" in confirmationEmailInfo:
+            msgBody += confirmationEmailInfo["contentFooter"]
         # todo: check amounts and Completed status, and then send.
         send_email(toEmail=response["value"][toField],
                             fromEmail=confirmationEmailInfo.get("from", "webmaster@chinmayamission.com"),
