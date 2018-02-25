@@ -58,6 +58,8 @@ def dict_array_to_sum_dict(original, key_value_eq = None):
                 dct[k] += 1
             elif isinstance(v, (int, float)):
                 dct[k] += float(v)
+            #elif not key_value_eq and v: #count number of occurrences of a string.
+            #    dct[k] += 1
     return dict(dct)
 
 def deep_access_list(x, keylist, key_value_eq=None):
@@ -116,6 +118,12 @@ def calculate_price(expressionString, data):
     True
     >>> calculate_price("age < 13 and race:'Half Marathon'==1", {"age": 12, "race": "Full Marathon"})
     False
+    >>> # Test for number:
+    >>> calculate_price("participants.has_bib_name", {"participants": [{"has_bib_name": True, "race": "5K - OK"}, {"has_bib_name": False, "race": "5K - OK"}, {"bib_name": "250", "race": "10K"}]})
+    1.0
+    >>> calculate_price("(participants - participants.bib_name) * 25", {"participants": [{"bib_name": "as", "race": "5K - OK"}, {"bib_name": "32", "race": "5K - OK"}, {"bib_name": "250", "race": "10K"}]})
+    50.0
+    >>> # Arbitrary strings (not working):
     >>> calculate_price("(participants.race:'5K - OK') * 25", {"participants": [{"name": "A", "race": "5K - OK"}, {"name": "B", "race": "5K - OK"}, {"name": "C", "race": "10K"}]})
     50.0
     """
