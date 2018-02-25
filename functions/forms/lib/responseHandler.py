@@ -33,3 +33,4 @@ def response_verify_update(response, responsesCollection, confirmationEmailInfo)
         ReturnValues="ALL_NEW")["Attributes"]
     confirmationEmailInfo["subject"] += " - Response Updated"
     send_confirmation_email(response, confirmationEmailInfo)
+    return response

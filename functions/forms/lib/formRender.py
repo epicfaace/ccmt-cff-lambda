@@ -114,6 +114,7 @@ class FormRender(DBConnection):
 
         paymentInfo['items'] = [item for item in paymentInfo['items'] if item['quantity'] * item['amount'] != 0]
         if newResponse:
+            paid = paymentInfo["total"] > 0
             self.responses.put_item(
                 Item={
                     "formId": formId, # partition key
@@ -127,9 +128,9 @@ class FormRender(DBConnection):
                             'version': formVersion
                     }, # id, version.
                     "paymentInfo": paymentInfo,
-                    "PAID": False
+                    "PAID": paid
             })
-            return {"success": True, "action": "insert", "id": responseId, "paymentInfo": paymentInfo }
+            return {"paid": paid, "success": True, "action": "insert", "id": responseId, "paymentInfo": paymentInfo }
         else:
             # Updating.
             response_old = self.responses.get_item(Key={ 'formId': formId, 'responseId': responseId })["Item"]
@@ -154,12 +155,15 @@ class FormRender(DBConnection):
                 },
                 # todo: if not updated, do this ...
                 ReturnValues="ALL_NEW"
-                )["Attributes"]
+            )["Attributes"]
+            paid = False
             if paymentInfo["total"] == 0 or (response_old.get("PAID", None) == True and paymentInfo["total"] <= response_old["paymentInfo"]["total"]):
                 # If 1) total amount is zero (user uses coupon code to get for free); or 2) user is updating a name or something -- so that they don't owe any more money -- update immediately.
                 response_verify_update(response_new, self.responses, confirmationEmailInfo)
+                paid = True
             return {
                 "success": True,
+                "paid": paid,
                 "action": "update",
                 "id": responseId,
                 "paymentInfo": paymentInfo,
