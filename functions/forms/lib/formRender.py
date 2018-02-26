@@ -114,7 +114,7 @@ class FormRender(DBConnection):
 
         paymentInfo['items'] = [item for item in paymentInfo['items'] if item['quantity'] * item['amount'] != 0]
         if newResponse:
-            paid = paymentInfo["total"] > 0
+            paid = paymentInfo["total"] == 0
             self.responses.put_item(
                 Item={
                     "formId": formId, # partition key
