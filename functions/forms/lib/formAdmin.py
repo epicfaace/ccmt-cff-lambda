@@ -116,8 +116,9 @@ class FormAdmin(FormRender):
 		)
 		return data
 	def edit_form(self, formId, formVersion, body):
-		if "schema" in body:
+		"""if "schema" in body:
 			body["schema"] = self.upsert_s_or_sm_entry(self.schemas, body["schema"])
+		"""
 		if "schemaModifier" in body:
 			body["schemaModifier"] = self.upsert_s_or_sm_entry(self.schemaModifiers, body["schemaModifier"])
 		body["form"] = self.update_form_entry(formId, formVersion, body)
