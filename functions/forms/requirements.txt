@@ -5,3 +5,4 @@ json2html==1.2.1
 pynliner==0.8.0
 py_expression_eval==0.3.4
 flatdict==1.2.0
+pydash==4.3.3

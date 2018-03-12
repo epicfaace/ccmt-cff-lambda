@@ -3,7 +3,8 @@ import datetime
 from boto3.dynamodb.conditions import Key
 from .admin.user import User
 import boto3
-
+import uuid
+import io
 
 def pickIdVersion(dict):
 	# picks the ID and version from a dictionary.
@@ -61,16 +62,33 @@ class FormAdmin(FormRender):
 			ExpressionAttributeValues={ ':c': self.centerId} 
 		)
 		return forms["Items"]
-	def get_form_responses(self, formId, formVersion):
+	def get_form_responses(self, formId, formVersion, format, filter):
 		form = self.forms.get_item(Key={"id": formId, "version": int(formVersion)})["Item"]
 		if (form["center"] != self.centerId):
 			raise Exception("Your center does not have access to this form.")
-		 
-		form = self.forms.get_item(Key={"id": formId, "version": int(formVersion)})["Item"]
 		responses = self.responses.query(
 			KeyConditionExpression=Key('formId').eq(formId)
-		)
-		return responses["Items"]
+		)["Items"]
+		return responses
+	"""def agg_form_responses(self, formId, formVersion):
+		form = self.forms.get_item(Key={"id": formId, "version": int(formVersion)}, ProjectionExpression="schemaModifier")["Item"]
+		# todo: add a check here for security.
+		dataOptions = self.schemaModifiers.get_item(Key=form["schemaModifier"], ProjectionExpression="dataOptions")["Item"]
+
+		if filter == "PAID":
+			return [res for res in responses if res.get("PAID", None)]
+		if format == "xlsx":
+			output = io.BytesIO()
+			df = pd.DataFrame(responses)
+			writer = pd.ExcelWriter(output, engine='xlsxwriter')
+			df.to_excel(writer, sheet_name='Responses')
+			writer.save()
+			xlsx_data = output.getvalue()
+			return {"returnType": "xlsx", "body": xlsx_data}
+		else:
+		return aggregate"""
+	"""def export_responses(self, formId, formVersion):
+		responses = self.get_form_responses(formId, formVersion)"""
 	def update_form_entry(self, formId, formVersion, body):
 		# Helper function.
 		formKey = {"id": formId, "version": int(formVersion)}
@@ -128,3 +146,27 @@ class FormAdmin(FormRender):
 			"success": True,
 			"updated_values": body
 		}
+	"""def duplicate_form(self, formId, formVersion):
+		form = self.render_form_by_id()
+		schema = self.get_schema(form)
+	def create_form(self, schemaId=None, schemaVersion=None):
+		if not (schemaId and schemaVersion):
+			schema = self.upsert_s_or_sm_entry(self.schemas, {"id": uuid.uuid4(), "version": 1})
+		schemaModifier = self.upsert_s_or_sm_entry(self.schemaModifiers, {"id": uuid.uuid4(), "version": 1})
+		form = {
+				"id": uuid.uuid4(),
+				"center": self.centerId,
+				"version": 1,
+				"schema": {
+					"id": schema['id'],
+					"version": schema['version'],
+				},
+				"schemaModifier": {
+					"id": schemaModifier['id'],
+					"version": schemaModifier['version']
+				}
+			}
+		self.forms.put_item(
+			Item=form
+		)
+		return form"""

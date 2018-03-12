@@ -23,3 +23,8 @@ cssutils*
 encutils*
 py_expression_eval*
 flatdict*
+dateutil*
+numpy*
+pandas*
+pytz*
+python_dateutil*

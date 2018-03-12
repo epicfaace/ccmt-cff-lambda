@@ -6,6 +6,9 @@ import datetime
 import uuid
 from decimal import Decimal
 from boto3.dynamodb.conditions import Key
+from pydash.objects import get
+from pydash.arrays import compact, flatten
+from pydash.collections import group_by, map_
 # from botocore.exceptions import ClientError
 # Ref:
 # https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GettingStarted.Python.03.html
@@ -25,6 +28,28 @@ class FormRender(DBConnection):
         """Renders response; used when editing a form."""
         response = self.responses.get_item(Key={"formId": formId, "responseId": responseId})["Item"]
         return response
+    def get_response_summary(self, formId, formVersion):
+        # todo: add some kind of auth / security here.
+        def aggregate(data, options):
+            finalData = {}
+            if "aggregateCols" in options and type(options["aggregateCols"]) is list:
+                for aggregateColName in options["aggregateCols"]:
+                    finalData[aggregateColName] = {str(k): len(v) for k, v in group_by(data, aggregateColName).items()}
+            return finalData
+        form = self.forms.get_item(Key={"id": formId, "version": int(formVersion)}, ProjectionExpression="schemaModifier")["Item"]
+        # todo: add a check here for security.
+        dataOptions = self.schemaModifiers.get_item(Key=form["schemaModifier"], ProjectionExpression="dataOptions")["Item"]["dataOptions"]
+        responses = self.responses.query(
+            KeyConditionExpression=Key('formId').eq(formId)
+        )["Items"]
+        if "mainTable" in dataOptions and dataOptions["mainTable"]:
+            dataOptions["mainTable"] = aggregate(responses, dataOptions["mainTable"])
+        if "unwindTables" in dataOptions:
+            for unwindCol in dataOptions["unwindTables"]:
+                unwoundRes = [get(response["value"], unwindCol) for response in responses]
+                unwoundRes = compact(flatten(unwoundRes))
+                dataOptions["unwindTables"][unwindCol] = aggregate(unwoundRes, dataOptions["unwindTables"][unwindCol])
+        return dataOptions
     def set_form_schemas(self, form):
         """Renders form with its schema and uiSchema resolved.
         """

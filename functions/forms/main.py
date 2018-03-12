@@ -1,5 +1,4 @@
 import json
-from bson.objectid import ObjectId
 from lib.formRender import FormRender
 from lib.formAdmin import FormAdmin
 from lib.ipnHandler import IpnHandler
@@ -14,12 +13,18 @@ class DecimalEncoder(json.JSONEncoder):
         return super(DecimalEncoder, self).default(o)
 
 def make_response(body, statuscode):
+    headers = {
+        'Access-Control-Allow-Origin': '*'
+    }
+    # if "res" in body and "returnType" in body["res"] and body["res"]["returnType"] == "xlsx":
+    #     headers["Content-Type"] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    #     body = body["res"].get("body", "")
+    # else:
+    body = json.dumps(body, cls=DecimalEncoder)
     return {
         "statusCode": statuscode,
-        "headers": {
-            'Access-Control-Allow-Origin': '*'
-        },
-        "body": json.dumps(body, cls=DecimalEncoder),
+        "headers": headers,
+        "body": body,
         "isBase64Encoded": False
     }
 def get_schema(schemaId, version):
@@ -42,7 +47,7 @@ def parseQuery(alias, qs, event):
         if qs["action"] == "formList":
             return ctrl.list_forms()
         elif qs["action"] == "formResponses":
-            return ctrl.get_form_responses(qs["id"], qs["version"])
+            return ctrl.get_form_responses(qs["id"], qs["version"], qs.get("format", "json"), qs.get("filter", ""))
         elif qs["action"] == "formEdit":
             return ctrl.edit_form(qs["id"], qs["version"], json.loads(event["body"]))
         #elif qs["action"] == "test":
@@ -63,6 +68,8 @@ def parseQuery(alias, qs, event):
             return ctrl.get_schemaModifier(qs["id"], qs["version"])
         elif qs["action"] == "formSubmit":
             return ctrl.submit_form(qs["formId"], qs["formVersion"], json.loads(event["body"]), qs.get("modifyLink", ""), qs.get("resid", ""))
+        elif qs["action"] == "formSummary": 
+            return ctrl.get_response_summary(qs["id"], qs["version"])
         else:
             raise Exception("Action not found.")
     
