@@ -42,6 +42,7 @@ class FormRender(DBConnection):
         responses = self.responses.query(
             KeyConditionExpression=Key('formId').eq(formId)
         )["Items"]
+        responses = [response for response in responses if response["PAID"] == True]
         if "mainTable" in dataOptions and dataOptions["mainTable"]:
             dataOptions["mainTable"] = aggregate(responses, dataOptions["mainTable"])
         if "unwindTables" in dataOptions:
