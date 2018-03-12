@@ -35,6 +35,7 @@ class FormRender(DBConnection):
             if "aggregateCols" in options and type(options["aggregateCols"]) is list:
                 for aggregateColName in options["aggregateCols"]:
                     finalData[aggregateColName] = {str(k): len(v) for k, v in group_by(data, aggregateColName).items()}
+                    finalData[aggregateColName]["TOTAL"] = sum(finalData[aggregateColName].values())
             return finalData
         form = self.forms.get_item(Key={"id": formId, "version": int(formVersion)}, ProjectionExpression="schemaModifier")["Item"]
         # todo: add a check here for security.
