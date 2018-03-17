@@ -2,6 +2,7 @@ from .dbConnection import DBConnection
 from .util import calculate_price
 from .responseHandler import response_verify_update
 from .render.couponCodes import coupon_code_verify_max, coupon_code_record_as_used
+from .emailer import send_confirmation_email
 import datetime
 import uuid
 from decimal import Decimal
@@ -142,21 +143,24 @@ class FormRender(DBConnection):
         paymentInfo['items'] = [item for item in paymentInfo['items'] if item['quantity'] * item['amount'] != 0]
         if newResponse:
             paid = paymentInfo["total"] == 0
+            response = {
+                "formId": formId, # partition key
+                "responseId": responseId, # sort key
+                "modifyLink": modifyLink,
+                "value": response_data,
+                "date_last_modified": datetime.datetime.now().isoformat(),
+                "date_created": datetime.datetime.now().isoformat(),
+                "form": {
+                        'id': formId,
+                        'version': formVersion
+                }, # id, version.
+                "paymentInfo": paymentInfo,
+                "PAID": paid
+            }
             self.responses.put_item(
-                Item={
-                    "formId": formId, # partition key
-                    "responseId": responseId, # sort key
-                    "modifyLink": modifyLink,
-                    "value": response_data,
-                    "date_last_modified": datetime.datetime.now().isoformat(),
-                    "date_created": datetime.datetime.now().isoformat(),
-                    "form": {
-                            'id': formId,
-                            'version': formVersion
-                    }, # id, version.
-                    "paymentInfo": paymentInfo,
-                    "PAID": paid
-            })
+                Item=response)
+            if paid: # If total amount is zero (user uses coupon code to get for free)
+                send_confirmation_email(response, confirmationEmailInfo)
             return {"paid": paid, "success": True, "action": "insert", "id": responseId, "paymentInfo": paymentInfo }
         else:
             # Updating.

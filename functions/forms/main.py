@@ -4,7 +4,7 @@ from lib.formAdmin import FormAdmin
 from lib.ipnHandler import IpnHandler
 import traceback
 import decimal
-
+import logging
 
 class DecimalEncoder(json.JSONEncoder):
     def default(self, o):
@@ -87,6 +87,8 @@ def handle(event, context):
             results = {"res": parseQuery(alias, qs, event) }
     except Exception:
         results = {"error": True, "message": traceback.format_exc()}
+        logger = logging.getLogger()
+        logger.error('Error: Alias: {}, Message: {}'.format(alias, traceback.format_exc()))
         return make_response(results, 400)
     #if "pathParameters" in event:
     #    results["b"] = event["a"]

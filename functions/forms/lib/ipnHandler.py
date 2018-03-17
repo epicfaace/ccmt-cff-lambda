@@ -2,7 +2,7 @@ import sys
 import urllib.parse
 import requests
 import datetime
-from .emailer import send_confirmation_email, send_partial_payment_email
+from .emailer import send_confirmation_email
 from .responseHandler import response_verify_update
 import json
 from json2html import json2html
