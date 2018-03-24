@@ -3,13 +3,14 @@ from .util import calculate_price
 from .responseHandler import response_verify_update
 from .render.couponCodes import coupon_code_verify_max, coupon_code_record_as_used
 from .emailer import send_confirmation_email
+
 import datetime
 import uuid
 from decimal import Decimal
 from boto3.dynamodb.conditions import Key
 from pydash.objects import get
 from pydash.arrays import compact, flatten
-from pydash.collections import group_by, map_
+from pydash.collections import group_by, map_, filter_
 # from botocore.exceptions import ClientError
 # Ref:
 # https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GettingStarted.Python.03.html
@@ -34,9 +35,24 @@ class FormRender(DBConnection):
         def aggregate(data, options):
             finalData = {}
             if "aggregateCols" in options and type(options["aggregateCols"]) is list:
-                for aggregateColName in options["aggregateCols"]:
-                    finalData[aggregateColName] = {str(k): len(v) for k, v in group_by(data, aggregateColName).items()}
-                    finalData[aggregateColName]["TOTAL"] = sum(finalData[aggregateColName].values())
+                for aggregateCol in options["aggregateCols"]:
+                    if (type(aggregateCol) is str):
+                        aggregateColName, aggregateColDisplayName = aggregateCol, aggregateCol
+                        filterFunc = lambda x: len(x)
+                    elif "colName" in aggregateCol and "filter" in aggregateCol:
+                        filterKey, filterValues = "", ""
+                        filterItem = aggregateCol["filter"]
+                        if "key" in filterItem and "value" in filterItem:
+                            filterKey, filterValues = filterItem["key"], filterItem["value"]
+                            if type(filterValues) is not list:
+                                filterValues = [filterValues]
+                        aggregateColName = aggregateCol["colName"]
+                        aggregateColDisplayName = aggregateCol.get("title", "") or "{}-{}-{}".format(aggregateCol["colName"], filterKey, filterValues)
+                        filterFunc = lambda x: sum(1 if get(xi, filterKey) in filterValues else 0 for xi in x)
+                    else:
+                        continue
+                    finalData[aggregateColDisplayName] = {str(k): filterFunc(v) for k, v in group_by(data, aggregateColName).items()}
+                    finalData[aggregateColDisplayName]["TOTAL"] = sum(finalData[aggregateColDisplayName].values())
             return finalData
         form = self.forms.get_item(Key={"id": formId, "version": int(formVersion)}, ProjectionExpression="schemaModifier")["Item"]
         # todo: add a check here for security.

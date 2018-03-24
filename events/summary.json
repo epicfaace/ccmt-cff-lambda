@@ -1,0 +1,9 @@
+{
+    "t": "apex invoke forms --alias DEV < events/summary.json",
+    "queryStringParameters": {
+        "id": "5e258c2c-99da-4340-b825-3f09921b4df5",
+        "version": 1,
+        "action": "formSummary"
+    },
+    "body": ""
+}
