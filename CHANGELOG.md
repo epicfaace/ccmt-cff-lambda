@@ -1,4 +1,7 @@
-
+lambdas:
+prod: 1.1.14
+dev: 1.1.14
+beta: 1.1.14
 
 ## 1.1.14 (server side only)
 3/24/2018
