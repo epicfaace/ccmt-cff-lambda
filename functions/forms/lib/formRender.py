@@ -153,8 +153,7 @@ class FormRender(DBConnection):
             if not coupon_code_verify_max(form, couponCode, responseId):
                 message = "Maximum number of coupon codes have already been redeemed."
                 return {"success": False, "message": message, "fields_to_clear": ["couponCode"]}
-            else:
-                coupon_code_record_as_used(self.forms, form, couponCode, responseId)
+            coupon_code_record_as_used(self.forms, form, couponCode, responseId, response_data)
         else:
             response_data.pop("couponCode", None)
         response_data.pop("total", None)

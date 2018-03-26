@@ -2,7 +2,7 @@ from ..util import calculate_price
 def coupon_code_verify_max(form, code, responseId=None):
     # True: coupon code can be used (either length of coupon codes used is not at max, or your ID has already used the coupon code before.)
     # If maximum is negative, that means there is no maximum.
-    countByName = form.get("couponCodes", {}).get("countBy", "responses")
+    countByName = form.get("couponCodes", {}).get(code, {}).get("countBy", "responses")
     usedDict = form.get("couponCodes_used", {}).get(code, {}).get(countByName, {})
     # usedDict looks like: {"responseid1": 1, "responseid2": 3}
     if (type(usedDict) is list): usedDict = {rid: 1 for rid in usedDict} # Backwards compatibility -- list.
@@ -11,28 +11,43 @@ def coupon_code_verify_max(form, code, responseId=None):
     maximum = form.get("couponCodes", {}).get(code, {}).get("max", -1)
     return responseId in usedDict or maximum < 0 or totalNumUsed < maximum
 
-def coupon_code_record_as_used(formsCollection, form, code, responseId):
+def coupon_code_record_as_used(formsCollection, form, code, responseId, response_data):
+    """
+    countByName - which column to count coupons used by, i.e., "responses" or "participants", etc.
+    response_data - data in the form.
+    """
     # form = formsCollection.get_item(Key=formKey)["Item"]
-    # code = "TEST"
-    # responseId = "123123-123123"
     formKey = {"id": form['id'], "version": int(form['version'])}
+    countByName = form.get("couponCodes", {}).get(code, {}).get("countBy", "responses")
+    usedDict = form.get("couponCodes_used", {}).get(code, {}).get(countByName, {})
+    shouldOverwriteList = False
+    if (type(usedDict) is list):
+        usedDict = {rid: 1 for rid in usedDict}
+        shouldOverwriteList = True
+    if countByName == "responses":
+        number = 1
+    else:
+        number = int(calculate_price(countByName, response_data)) # todo: should this be turned into a decimal?
+    if usedDict.get(countByName, -1) == number:
+        # Number did not change. No need to update it.
+        return
+    else:
+        usedDict[countByName] = number
+
     if "couponCodes_used" in form:
-        if code in form["couponCodes_used"] and "responses" in form["couponCodes_used"][code]:
-            if responseId in form["couponCodes_used"][code]["responses"]:
-                return True
-            else:
-                formsCollection.update_item(
-                    Key = formKey,
-                    UpdateExpression="SET couponCodes_used.#code.responses = list_append(if_not_exists(couponCodes_used.#code.responses, :empty_list), :responseId)",
-                    ExpressionAttributeNames={
-                        "#code": code
-                    },
-                    ExpressionAttributeValues = {
-                        ":responseId": [responseId],
-                        ":empty_list": []
-                    },
-                    ConditionExpression="attribute_exists(couponCodes_used.#code.responses)"
-                )
+        if not shouldOverwriteList and code in form["couponCodes_used"] and countByName in form["couponCodes_used"][code]:
+            formsCollection.update_item(
+                Key = formKey,
+                UpdateExpression="SET couponCodes_used.#code.#countByName.#responseId = :number",
+                ExpressionAttributeNames={
+                    "#code": code,
+                    "#countByName": countByName,
+                    "#responseId": responseId
+                },
+                ExpressionAttributeValues = {
+                    ":number": number
+                }
+            )
         else:
             formsCollection.update_item(
                 Key = formKey,
@@ -41,7 +56,7 @@ def coupon_code_record_as_used(formsCollection, form, code, responseId):
                     "#code": code
                 },
                 ExpressionAttributeValues = {
-                    ":couponCodeValue": {"responses": [responseId] }
+                    ":couponCodeValue": {countByName: usedDict}
                 }
             )
     else:
@@ -49,7 +64,7 @@ def coupon_code_record_as_used(formsCollection, form, code, responseId):
             Key = formKey,
             UpdateExpression="SET couponCodes_used = :couponCodes_used",
             ExpressionAttributeValues = {
-                ":couponCodes_used": {code: {"responses": [responseId] } }
+                ":couponCodes_used": {code: {countByName: usedDict} }
             }
         )
     return True

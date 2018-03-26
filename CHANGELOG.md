@@ -1,10 +1,23 @@
 lambdas:
 prod: 1.1.15
-dev: 1.1.14
+dev: 1.1.15
 beta: 1.1.14
 
 ## 1.1.16 (tba)
-- 
+- Allow couponCodes_used to use dictionaries instead:
+```json
+	"vfree234701": {
+		"responses": {
+			"id": 2,
+			"id2": 3,
+			"id3": 1
+    },
+    "participants": {
+      "id1": 5
+    }
+	}
+```
+- And in couponCodes, countBy is allowed to be done:
 ```json
 	"ticketfree234701": {
 		"max": 30,
