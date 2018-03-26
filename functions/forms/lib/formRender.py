@@ -139,17 +139,20 @@ class FormRender(DBConnection):
         if "couponCode" in response_data and response_data["couponCode"]:
             couponCode = response_data["couponCode"]
             if "couponCodes" in form and couponCode in form["couponCodes"]:
-                coupon_paymentInfoItem = form["couponCodes"][couponCode]
-                coupon_paymentInfoItem.setdefault("quantity", "1")
-                coupon_paymentInfoItem.setdefault("name", "Coupon Code")
-                coupon_paymentInfoItem.setdefault("description", "Coupon Code")
+                coupon_paymentInfoItem = {
+                    "amount": form["couponCodes"][couponCode].get("amount", "0"),
+                    "quantity": form["couponCodes"][couponCode].get("quantity", "1"),
+                    "name": form["couponCodes"][couponCode].get("name", "Coupon Code"),
+                    "description": form["couponCodes"][couponCode].get("description", "Coupon Code")
+                }
                 calc_item_total_to_paymentInfo(coupon_paymentInfoItem, paymentInfo)
                 paymentInfo['items'].append(coupon_paymentInfoItem)
             else:
                 return {"success": False, "message": "Coupon Code not found.", "fields_to_clear": ["couponCode"]}
             # verify max # of coupons:
             if not coupon_code_verify_max(form, couponCode, responseId):
-                return {"success": False, "message": "Maximum number of coupon codes have already been redeemed.", "fields_to_clear": ["couponCode"]}
+                message = "Maximum number of coupon codes have already been redeemed."
+                return {"success": False, "message": message, "fields_to_clear": ["couponCode"]}
             else:
                 coupon_code_record_as_used(self.forms, form, couponCode, responseId)
         else:

@@ -1,9 +1,15 @@
+from ..util import calculate_price
 def coupon_code_verify_max(form, code, responseId=None):
     # True: coupon code can be used (either length of coupon codes used is not at max, or your ID has already used the coupon code before.)
     # If maximum is negative, that means there is no maximum.
-    responses = form.get("couponCodes_used", {}).get(code, {}).get("responses", [])
+    countByName = form.get("couponCodes", {}).get("countBy", "responses")
+    usedDict = form.get("couponCodes_used", {}).get(code, {}).get(countByName, {})
+    # usedDict looks like: {"responseid1": 1, "responseid2": 3}
+    if (type(usedDict) is list): usedDict = {rid: 1 for rid in usedDict} # Backwards compatibility -- list.
+    totalNumUsed = sum(usedDict.values())
+
     maximum = form.get("couponCodes", {}).get(code, {}).get("max", -1)
-    return responseId in responses or maximum < 0 or len(responses) < maximum
+    return responseId in usedDict or maximum < 0 or totalNumUsed < maximum
 
 def coupon_code_record_as_used(formsCollection, form, code, responseId):
     # form = formsCollection.get_item(Key=formKey)["Item"]
