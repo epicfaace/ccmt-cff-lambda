@@ -1,7 +1,11 @@
 lambdas:
-prod: 1.1.14
+prod: 1.1.15
 dev: 1.1.14
 beta: 1.1.14
+
+## 1.1.15
+3/25/2018
+- Fix email error logging in CloudWatch.
 
 ## 1.1.14 (server side only)
 3/24/2018
