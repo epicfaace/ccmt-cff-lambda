@@ -1,7 +1,7 @@
 from .dbConnection import DBConnection
 from .util import calculate_price
 from .responseHandler import response_verify_update
-from .render.couponCodes import coupon_code_verify_max, coupon_code_record_as_used
+from .render.couponCodes import coupon_code_verify_max_and_record_as_used
 from .emailer import send_confirmation_email
 
 import datetime
@@ -150,10 +150,10 @@ class FormRender(DBConnection):
             else:
                 return {"success": False, "message": "Coupon Code not found.", "fields_to_clear": ["couponCode"]}
             # verify max # of coupons:
-            if not coupon_code_verify_max(form, couponCode, responseId):
-                message = "Maximum number of coupon codes have already been redeemed."
+            code_valid, code_num_remaining = coupon_code_verify_max_and_record_as_used(self.forms, form, couponCode, responseId, response_data)
+            if not code_valid:
+                message = "Coupon code maximum reached.\nSubmitting this form will cause you to exceed the coupon code maximum.\nNumber of spots remaining: {}".format(code_num_remaining)
                 return {"success": False, "message": message, "fields_to_clear": ["couponCode"]}
-            coupon_code_record_as_used(self.forms, form, couponCode, responseId, response_data)
         else:
             response_data.pop("couponCode", None)
         response_data.pop("total", None)

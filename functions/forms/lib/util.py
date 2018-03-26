@@ -89,7 +89,7 @@ def deep_access(x, keylist):
     val = x
     for key in keylist:
         val = val.get(key, 0)
-    return val
+    return val 
 
 def calculate_price(expressionString, data):
     """
