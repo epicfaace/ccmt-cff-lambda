@@ -94,7 +94,6 @@ def send_email(
     if ccEmail and type(ccEmail) is str: ccEmail = ccEmail.split(",")
     if bccEmail and type(bccEmail) is str: bccEmail = bccEmail.split(",")
     
-    logger = logging.getLogger()
     try:
         response = client.send_email(
             Source=SENDER,
@@ -135,7 +134,7 @@ def send_email(
         )
     # Display an error if something goes wrong.
     except ClientError as e:
-        logger.error('Error sending email to {}. Error message: {}'.format(toEmail, e.response['Error']['Message']))
+        print('Error sending email to {}. Error message: {}'.format(toEmail, e.response['Error']['Message']))
         raise
     else:
-        logger.debug('Email sent successfully to {}.'.format(toEmail))
+        print('Email sent successfully to {}.'.format(toEmail))
