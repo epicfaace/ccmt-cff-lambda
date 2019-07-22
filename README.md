@@ -1,4 +1,7 @@
+## Note: This repo has been archived and merged into https://github.com/epicfaace/CFF
+
 # CCMT CFF REST API
+
 Built using AWS Chalice.
 
 ## Set up
